@@ -16,7 +16,10 @@
         "groups": [
           {
             "group": "Get started",
-            "pages": ["index", "quickstart", "guides/authentication"]
+            "pages": [
+              "index",
+              "guides/authentication"
+            ]
           },
           {
             "group": "Core concepts",

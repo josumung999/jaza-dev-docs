@@ -1,7 +1,7 @@
 ---
-title: "Quickstart"
-description: "Integrate Jaza with Expo and Node: create a customer, show balance, accept Mobile Money top-ups, and consume credits."
-keywords: ["quickstart", "expo", "node", "jaza", "top-up", "mobile money"]
+title: "Get Started with Jaza in Minutes"
+description: "Install the Node SDK, create your first customer, load credits, and make your first consume() call. From zero to billing in under 5 minutes."
+sidebarTitle: "Quickstart"
 ---
 
 This guide takes you from zero to a working prepaid flow using **Expo / React Native** and **Node.js**.
@@ -13,7 +13,7 @@ This guide takes you from zero to a working prepaid flow using **Expo / React Na
 ## Prerequisites
 
 - A [Jaza](https://jaza.dev) developer account
-- Node.js 18+
+- Node.js 18\+
 - An Expo app (Expo Router or classic `App.tsx`)
 - Sandbox API keys from the [dashboard](https://jaza.dev/dashboard) (test environment)
 
@@ -22,7 +22,7 @@ This guide takes you from zero to a working prepaid flow using **Expo / React Na
 In the dashboard, create an app, enable the markets you need, and open **API keys**.
 
 | Key | Where it lives | Example prefix |
-|-----|----------------|----------------|
+| --- | --- | --- |
 | Secret | Server only (`JAZA_SECRET_KEY`) | `jz_test_sk_…` |
 | Publishable | Mobile app (`EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY`) | `jz_test_pk_…` |
 
@@ -117,9 +117,9 @@ Ensure Android resizes with the keyboard (`app.json`):
     import { Stack } from 'expo-router';
     import { GestureHandlerRootView } from 'react-native-gesture-handler';
     import { JazaProvider } from '@jazadev/react-native';
-
+    
     const API_BASE = process.env.EXPO_PUBLIC_API_URL!;
-
+    
     export default function RootLayout() {
       return (
         <GestureHandlerRootView style={{ flex: 1 }}>
@@ -150,7 +150,7 @@ Ensure Android resizes with the keyboard (`app.json`):
     import { GestureHandlerRootView } from 'react-native-gesture-handler';
     import { JazaProvider } from '@jazadev/react-native';
     import { HomeScreen } from './screens/HomeScreen';
-
+    
     export default function App() {
       return (
         <GestureHandlerRootView style={{ flex: 1 }}>
