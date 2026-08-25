@@ -1,0 +1,62 @@
+---
+title: "Authentication"
+description: "Secret keys, publishable keys, and top-up JWTs — how credentials work with the Jaza SDKs."
+keywords: ["api keys", "secret key", "publishable key", "jwt", "authentication"]
+---
+
+Jaza uses two long-lived keys per environment, plus short-lived top-up tokens for the mobile SDK.
+
+## Key types
+
+| Credential | SDK | Safe in client? |
+|------------|-----|-----------------|
+| Secret key (`jz_*_sk_*`) | `@jazadev/node` | No — server only |
+| Publishable key (`jz_*_pk_*`) | `@jazadev/react-native` | Yes |
+| Top-up JWT | Issued by `jaza.topUp`, passed into the RN sheet | Yes — short-lived |
+
+<Warning>
+  Anyone with your secret key can create customers, debit wallets, and issue top-up sessions. Rotate immediately if exposed ([dashboard](https://jaza.dev/dashboard) → API keys).
+</Warning>
+
+## Backend: secret key
+
+```ts
+import { Jaza } from '@jazadev/node';
+
+const jaza = new Jaza({
+  secretKey: process.env.JAZA_SECRET_KEY!,
+  publicKey: process.env.JAZA_PUBLIC_KEY!, // used when issuing client-facing sessions
+});
+```
+
+All privileged operations go through this client: `createCustomer`, `getBalance`, `topUp`, `consume`, `check`.
+
+## Mobile: publishable key + JWT
+
+`JazaProvider` takes `publishableKey`. The top-up sheet also needs a JWT from **your** backend:
+
+```ts
+// Server
+const session = await jaza.topUp({ customerId });
+res.json({ token: session.token });
+```
+
+```tsx
+// App
+<JazaTopUpButton
+  onRequestToken={async () => {
+    const res = await fetch(`${API}/jaza/top-up-token`, { method: 'POST' });
+    return (await res.json()).token as string;
+  }}
+/>
+```
+
+Your BFF should authenticate the end user (session cookie, Bearer token, etc.) before calling `topUp`, so one user cannot mint tokens for another customer's wallet.
+
+## Sandbox vs live keys
+
+Use matching pairs. Do not mix `jz_test_sk_` with `jz_live_pk_`. The dashboard shows both environments; start with test keys until MoMo flows look correct, then switch to live.
+
+## Errors
+
+The Node SDK throws `JazaError` with `statusCode`, `code`, and `raw`. Handle insufficient balance and validation failures in your API responses so the app can show a clear message.

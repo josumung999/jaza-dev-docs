@@ -1,0 +1,59 @@
+---
+title: "Concepts"
+description: "Credits, customers, sandbox vs live, Mobile Money markets, and how Jaza settlements work."
+keywords: ["credits", "settlements", "sandbox", "live", "mobile money", "bundles"]
+---
+
+## Credits
+
+Credits are the unit of prepaid balance on a customer's wallet. You price features in credits in the dashboard (for example, `SEND_MESSAGE` = 5 credits). Users buy packs (bundles) with Mobile Money; your backend debits credits with `consume`.
+
+Internally Jaza maps credits to USD for analytics and settlement. You do not maintain FX tables or per-currency ledgers for MoMo collections.
+
+## Customers and wallets
+
+Each end user maps to a Jaza **customer** (`cus_…`) and a wallet scoped to your app and environment (sandbox or live). Create the customer once with `@jazadev/node` and store the id in your database.
+
+## Sandbox vs live
+
+| | Sandbox | Live |
+|---|---------|------|
+| Keys | `jz_test_sk_…` / `jz_test_pk_…` | `jz_live_sk_…` / `jz_live_pk_…` |
+| Data | Isolated test wallets and payments | Production |
+| Use for | Integration and QA | Real users |
+
+Switch environments in the dashboard. Operational data (wallets, top-ups, consumption) is isolated per environment; app config like features and bundles is shared.
+
+## Bundles and features
+
+- **Bundles** — credit packs users buy in the top-up sheet (price + credits).
+- **Features** — named actions with a `creditsCost`. Pass `featureCode` to `consume`.
+
+Configure both in the dashboard before calling the SDKs.
+
+## Mobile Money and markets
+
+Enable countries / Mobile Money markets in **App Settings**. Jaza routes deposits through its payment partners (including PawaPay coverage across African markets).
+
+<Note>
+  You do **not** create or manage a PawaPay merchant account. Jaza is the merchant of record for collection rails; you integrate SDKs and enable markets in the dashboard.
+</Note>
+
+## Settlements
+
+When users top up, Jaza collects local currency via Mobile Money, credits the user's wallet, and settles value to you according to your merchant settlement flow in the dashboard (USD-oriented balances and payouts).
+
+You do not:
+
+- Reconcile multi-currency MoMo deposits yourself
+- Operate aggregator payouts country by country
+- Build a second ledger for FX
+
+You do:
+
+- Track credit balances and consumption for product UX
+- Use dashboard analytics for revenue and activity
+
+## Top-up session
+
+`jaza.topUp({ customerId })` creates a short-lived session and JWT. The React Native SDK uses that token (with your publishable key) to list bundles, quote, and deposit. Poll with `jaza.check({ topUpId })` on the server if you need session status outside the client sheet.

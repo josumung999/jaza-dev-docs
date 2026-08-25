@@ -1,34 +1,40 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "Jaza Docs",
+  "description": "Prepaid billing SDKs for African apps — credit wallets, Mobile Money top-ups, and settlements handled by Jaza.",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#2DD4BF",
+    "light": "#5EEAD4",
+    "dark": "#0D9488"
   },
   "favicon": "/favicon.svg",
   "navigation": {
     "pages": [
       {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
-        ]
+        "group": "Get started",
+        "pages": ["index", "quickstart"]
+      },
+      {
+        "group": "Guides",
+        "pages": ["guides/concepts", "guides/authentication"]
+      },
+      {
+        "group": "SDKs",
+        "pages": ["sdks/node", "sdks/react-native"]
       }
     ],
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+          "anchor": "Dashboard",
+          "href": "https://jaza.dev/dashboard",
+          "icon": "grid-2"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "jaza.dev",
+          "href": "https://jaza.dev",
+          "icon": "globe"
         }
       ]
     }
@@ -41,13 +47,13 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:privacy@jaza.dev"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://app.mintlify.com"
+      "href": "https://jaza.dev/dashboard"
     }
   },
   "contextual": {
@@ -64,9 +70,9 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/jazadev",
+      "github": "https://github.com/josumung999",
+      "linkedin": "https://linkedin.com/company/jaza"
     }
   }
 }

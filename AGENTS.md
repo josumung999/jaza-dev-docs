@@ -1,33 +1,42 @@
-> **First-time setup**: Customize this file for your project. Prompt the user to customize this file for their project.
-> For Mintlify product knowledge (components, configuration, writing standards),
-> install the Mintlify skill: `npx skills add https://mintlify.com/docs`
-
 # Documentation project instructions
 
 ## About this project
 
-- This is a documentation site built on [Mintlify](https://mintlify.com)
-- Pages are MDX files with YAML frontmatter
-- Configuration lives in `docs.json`
-- Use the Mintlify MCP server, `https://mcp.mintlify.com`, to edit content and settings via MCP
-- Use the Mintlify docs MCP server, `https://www.mintlify.com/docs/mcp`, to query information about using Mintlify via MCP
+- Documentation site for **Jaza** (product of Polele SAS) at docs.jaza.dev
+- Built on [Mintlify](https://mintlify.com) — MDX pages + `docs.json`
+- Source of truth for integration is the **SDKs**, not raw REST
+
+## Product facts (do not contradict)
+
+- Jaza = prepaid billing for African apps (credit wallets, MoMo top-ups, feature metering)
+- Developers use `@jazadev/node` (secret key, server) and `@jazadev/react-native` (publishable key + top-up JWT)
+- **Jaza handles** Mobile Money collection (PawaPay African markets and related rails), FX into credits/USD, and **merchant settlements**
+- Developers **do not** set up PawaPay or other aggregators, manage multi-currency settlement, or treat the REST API as the primary integration path
+- Sandbox (`jz_test_*`) vs live (`jz_live_*`) keys and data are isolated
 
 ## Terminology
 
-{/* Add product-specific terms and preferred usage */}
-{/* Example: Use "workspace" not "project", "member" not "user" */}
+| Prefer | Avoid |
+|--------|--------|
+| credits / wallet | “coins”, vague “balance points” without credits |
+| publishable key / secret key | “public API key” alone without distinguishing |
+| top-up session / top-up JWT | “payment link” unless accurate |
+| sandbox / live | “prod key” without saying live |
+| settlements (Jaza-managed) | “you settle MoMo yourself” |
 
 ## Style preferences
 
-{/* Add any project-specific style rules below */}
-
-- Use active voice and second person ("you")
-- Keep sentences concise — one idea per sentence
-- Use sentence case for headings
-- Bold for UI elements: Click **Settings**
-- Code formatting for file names, commands, paths, and code references
+- Second person (“you”), active voice
+- Sentence case headings
+- Bold for UI: Click **API keys**
+- Code for packages, env vars, methods
+- SDK code samples over curl
+- Keep examples aligned with package READMEs in `packages/@jaza-node` and `packages/@jaza-react-native`
 
 ## Content boundaries
 
-{/* Define what should and shouldn't be documented */}
-{/* Example: Don't document internal admin features */}
+- **Do** document Expo + Node quickstart, concepts, auth, SDK references
+- **Do not** add an API Reference / OpenAPI playground as primary nav in v1
+- **Do not** instruct merchants to create PawaPay accounts
+- **Do not** invent unsupported client stacks (mark as Coming soon)
+- Link dashboard to https://jaza.dev/dashboard and product to https://jaza.dev

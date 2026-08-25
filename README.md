@@ -1,55 +1,26 @@
-# Mintlify Starter Kit
+# Jaza documentation
 
-Use the starter kit to get your docs deployed and ready to customize.
+Official developer docs for [Jaza](https://jaza.dev) — prepaid billing infrastructure for African apps.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+**Stack:** Mintlify (`docs.json` + MDX). Deployed automatically when you push to `main`.
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
-
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
-
-## AI-assisted writing
-
-Set up your AI coding tool to work with Mintlify:
+## Local preview
 
 ```bash
-npx skills add https://mintlify.com/docs
-```
-
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
-
-See the [AI tools guides](/ai-tools) for tool-specific setup.
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
-```
 npm i -g mint
-```
-
-Run the following command at the root of your documentation, where your `docs.json` is located:
-
-```
 mint dev
 ```
 
-View your local preview at `http://localhost:3000`.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Publishing changes
+## Custom domain
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+Attach `docs.jaza.dev` in the [Mintlify dashboard](https://dashboard.mintlify.com) → Domain settings, then add the DNS records Mintlify provides.
 
-## Need help?
+## Content rules
 
-### Troubleshooting
+See [AGENTS.md](./AGENTS.md). Docs are **SDK-first** (`@jazadev/node` + `@jazadev/react-native`). Do not document raw REST as the primary integration path. Jaza handles Mobile Money (PawaPay markets) and merchant settlements — developers do not set up aggregators.
 
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
+## License
 
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+See [LICENSE](./LICENSE).

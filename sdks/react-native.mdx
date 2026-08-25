@@ -1,0 +1,176 @@
+---
+title: "React Native / Expo SDK"
+description: "Official @jazadev/react-native SDK — JazaProvider, balance widget, and Mobile Money top-up sheet."
+keywords: ["@jazadev/react-native", "expo", "jaza", "top-up", "balance"]
+---
+
+Official React Native / Expo client for Jaza.
+
+Use this in your **mobile app** with your publishable key (`jz_*_pk_*`) and a short-lived top-up token from **your backend**. Never put your secret key in the app.
+
+Server-side calls use [`@jazadev/node`](/sdks/node).
+
+## Install
+
+```bash
+npm install @jazadev/react-native
+```
+
+Expo peers:
+
+```bash
+npx expo install react react-native react-native-reanimated react-native-gesture-handler react-native-safe-area-context react-native-screens @gorhom/bottom-sheet @expo/vector-icons
+```
+
+## Expo config
+
+Keep the phone field visible when the keyboard opens on Android:
+
+```json
+{
+  "expo": {
+    "android": {
+      "softwareKeyboardLayoutMode": "resize"
+    }
+  }
+}
+```
+
+## Provider setup
+
+Wrap the app outermost with `GestureHandlerRootView`, then `JazaProvider`.
+
+Define `getBalance` once; `JazaBalanceWidget` and the offer step both use it.
+
+<Tabs>
+  <Tab title="Expo Router">
+    ```tsx
+    import { Stack } from 'expo-router';
+    import { GestureHandlerRootView } from 'react-native-gesture-handler';
+    import { JazaProvider } from '@jazadev/react-native';
+
+    const API_BASE = process.env.EXPO_PUBLIC_API_URL!;
+
+    export default function RootLayout() {
+      return (
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <JazaProvider
+            publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
+            getBalance={async () => {
+              const res = await fetch(`${API_BASE}/jaza/balance`, {
+                credentials: 'include',
+              });
+              const data = await res.json();
+              return data.balanceCredits as number;
+            }}
+            onTopUpComplete={({ credits }) => {
+              console.log('Top-up completed', credits);
+            }}
+            theme="system"
+          >
+            <Stack />
+          </JazaProvider>
+        </GestureHandlerRootView>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Classic App">
+    ```tsx
+    import { GestureHandlerRootView } from 'react-native-gesture-handler';
+    import { JazaProvider } from '@jazadev/react-native';
+    import { HomeScreen } from './screens/HomeScreen';
+
+    export default function App() {
+      return (
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <JazaProvider
+            publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
+            getBalance={async () => {
+              const res = await fetch(
+                `${process.env.EXPO_PUBLIC_API_URL}/jaza/balance`,
+              );
+              return (await res.json()).balanceCredits;
+            }}
+            theme="system"
+          >
+            <HomeScreen />
+          </JazaProvider>
+        </GestureHandlerRootView>
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Balance — `JazaBalanceWidget`
+
+```tsx
+import { View } from 'react-native';
+import { JazaBalanceWidget } from '@jazadev/react-native';
+
+export default function HomeScreen() {
+  return (
+    <View style={{ padding: 20 }}>
+      <JazaBalanceWidget />
+    </View>
+  );
+}
+```
+
+## Top up — `JazaTopUpButton`
+
+Does not open the sheet until `onRequestToken` returns a JWT from your server (`jaza.topUp`).
+
+```tsx
+import { View } from 'react-native';
+import { JazaBalanceWidget, JazaTopUpButton } from '@jazadev/react-native';
+
+const API_BASE = process.env.EXPO_PUBLIC_API_URL!;
+
+export default function HomeScreen() {
+  return (
+    <View style={{ padding: 20, gap: 16 }}>
+      <JazaBalanceWidget />
+      <JazaTopUpButton
+        label="Top up credits"
+        onRequestToken={async () => {
+          const res = await fetch(`${API_BASE}/jaza/top-up-token`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+          if (!res.ok) throw new Error('Could not start top-up');
+          const data = await res.json();
+          return data.token as string;
+        }}
+      />
+    </View>
+  );
+}
+```
+
+Optional props: `label`, `style`. `JazaProvider` also accepts `onTopUpComplete`.
+
+## What happens after Top up
+
+1. App calls your backend → JWT from `jaza.topUp`
+2. Sheet opens → bundles and balance
+3. User picks bundle → phone, country, currency → quote
+4. Confirm → Jaza collects via Mobile Money → SDK polls until success or failure
+5. Balance refreshes via `getBalance`
+
+You do not configure MoMo aggregators; Jaza handles collection across enabled markets and settlements to you.
+
+## Exports
+
+| Export | Description |
+|--------|-------------|
+| `JazaProvider` | Context, theme, sheet, public client |
+| `JazaBalanceWidget` | Credits balance card |
+| `JazaTopUpButton` | Opens sheet after `onRequestToken` |
+| `useJaza` | Advanced sheet state |
+| `PublicClient` | Low-level public API client |
+
+## Full path
+
+Follow the [Quickstart](/quickstart) for Node BFF + Expo end-to-end.

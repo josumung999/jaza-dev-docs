@@ -1,0 +1,92 @@
+---
+title: "Node.js SDK"
+description: "Official @jazadev/node SDK — create customers, top-up sessions, balances, and consume credits."
+keywords: ["@jazadev/node", "node", "sdk", "consume", "topUp"]
+---
+
+Official backend SDK for Jaza prepaid / metered billing.
+
+```bash
+npm install @jazadev/node
+```
+
+## Initialize
+
+```ts
+import { Jaza } from '@jazadev/node';
+
+const jaza = new Jaza({
+  secretKey: process.env.JAZA_SECRET_KEY!, // jz_test_sk_… or jz_live_sk_…
+  publicKey: process.env.JAZA_PUBLIC_KEY!, // jz_test_pk_… or jz_live_pk_…
+  // apiBaseUrl: 'http://localhost:3001', // local jaza-api only
+});
+```
+
+## Methods
+
+| Method | Description |
+|--------|-------------|
+| `createCustomer({ name, email?, phoneNumber? })` | Create customer; returns `cus_…` |
+| `topUp({ customerId })` | Top-up session + JWT `token` for the mobile SDK |
+| `getBalance({ customerId })` | Wallet including `balanceCredits` |
+| `consume({ customerId, featureCode \| credits, idempotencyKey })` | Debit wallet |
+| `check({ topUpId })` | Top-up session status |
+
+Errors throw `JazaError` with `statusCode`, `code`, and `raw`.
+
+## Create a customer
+
+```ts
+const customer = await jaza.createCustomer({
+  name: 'Amina Okello',
+  email: 'amina@example.com',
+});
+// store customer.id on your user
+```
+
+## Issue a top-up token
+
+```ts
+const session = await jaza.topUp({ customerId: customer.id });
+// session.token → React Native JazaTopUpButton.onRequestToken
+```
+
+## Read balance
+
+```ts
+const wallet = await jaza.getBalance({ customerId: customer.id });
+console.log(wallet.balanceCredits);
+```
+
+## Consume credits
+
+Prefer feature codes configured in the dashboard:
+
+```ts
+await jaza.consume({
+  customerId: customer.id,
+  featureCode: 'SEND_MESSAGE',
+  idempotencyKey: `msg_${messageId}`,
+});
+```
+
+Or debit a raw credit amount (do not send both `featureCode` and `credits`):
+
+```ts
+await jaza.consume({
+  customerId: customer.id,
+  credits: 10,
+  idempotencyKey: `adj_${id}`,
+});
+```
+
+## Check top-up status
+
+```ts
+const status = await jaza.check({ topUpId: session.id });
+console.log(status.status); // e.g. PENDING until deposits complete
+```
+
+## Typical BFF shape
+
+See the [Quickstart](/quickstart) for `GET /jaza/balance` and `POST /jaza/top-up-token` examples wired to Expo.
