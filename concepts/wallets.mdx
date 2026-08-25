@@ -1,0 +1,42 @@
+---
+title: "Wallets: Per-User Credit Balances in Jaza"
+sidebarTitle: "Wallets"
+description: "Each Jaza customer has a wallet that holds their credit balance. Balances update instantly on top-up and are deducted atomically on every consume() call."
+---
+
+Every Jaza customer owns exactly one wallet. The wallet stores their current credit balance as a non-negative integer and updates in real time as customers top up and spend credits. Because Jaza handles all balance changes atomically, you never need to manage locking or race conditions yourself.
+
+## One wallet per customer
+
+Wallets are tied to Jaza customers, which you create with the Node SDK or API. Each customer receives a short ID with a `cus_` prefix, such as `cus_abc123def`. That ID is the wallet's address for all top-up and consume operations.
+
+## Balance rules
+
+- **Non-negative integer**: A wallet balance is always a whole number and never drops below zero.
+- **Atomic deduction**: Concurrent `consume()` calls are race-safe. Jaza locks the wallet during deduction so multiple simultaneous requests never result in a negative balance.
+- **Instant updates**: Successful top-ups and consume calls reflect immediately in the wallet.
+
+## How balances change
+
+| Action | Trigger | Balance change |
+| --- | --- | --- |
+| Increase | Top-up payment confirmed via webhook | \+N credits |
+| Decrease | `jaza.consume()` succeeds | -N credits |
+
+When a top-up completes, Jaza records a `TOPUP` ledger entry and increments the wallet. When your backend calls `consume()`, Jasa records a `CONSUME` entry and decrements the wallet only if sufficient credits exist.
+
+## UI components
+
+Jaza provides ready-made components that you can drop into your app and theme to match your brand:
+
+- **FuelBalance**: A live balance widget that displays the customer's current credit count and auto-refreshes after top-ups or consumption.
+- **TopUpModal**: A full payment flow modal that lets customers select a bundle, choose a payment method (MTN MoMo, Airtel Money, Orange, M-Pesa, or card), and complete the purchase.
+- **Transaction history**: A list of all credit movements with timestamps, amounts, and feature names.
+
+All components accept a theme object so colors, fonts, and spacing match your application.
+
+## Next steps
+
+- Read how the [immutable ledger](/concepts/ledger) records every balance change
+- Learn to [top up a wallet](/guides/top-up-wallet) with Mobile Money or card
+- See the [consume credits guide](/guides/consume-credits) for backend integration

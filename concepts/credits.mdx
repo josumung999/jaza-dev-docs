@@ -1,0 +1,44 @@
+---
+title: "Credits: The Currency of Your Jaza Wallet"
+sidebarTitle: "Credits"
+description: "Credits are the unit of value in Jaza. Users buy them with real money and spend them on features you define. Learn how credits work end to end."
+---
+
+Credits are the abstract unit of value inside Jaza. Think of them as prepaid tokens that your customers purchase with real money (via Mobile Money or card) and then spend on features your app provides. Because credits sit between money and features, you control both the exchange rate (how many credits a top-up buys) and the price list (how many credits a feature costs).
+
+## What credits are
+
+A credit is an integer unit of value that you define per app. Credits are:
+
+- **Integer-only**: Jaza stores and deducts credits as whole numbers. Fractional credits are not supported.
+- **App-scoped**: The value of one credit is set by your bundle pricing and rate card, so meaning varies per application.
+- **Non-expiring**: Credits never expire unless you configure an expiry policy (planned feature).
+
+## How credits map to money
+
+Money enters the system when a customer tops up their wallet. Your bundle pricing determines how many credits the customer receives for a given payment amount. For example, you might sell 500 credits for KES 100 or 1,000 credits for CDF 5,000. Jaza handles the payment collection and credits the wallet automatically.
+
+## How credits map to features
+
+After a customer has credits, they spend them by calling features you expose through `jaza.consume()`. The cost of each feature is defined in your rate card. Here is a typical example:
+
+| Feature | Cost in credits |
+| --- | --- |
+| `SEND_SMS` | 2 |
+| `AI_PROMPT` | 10 |
+| `PRINT_RECEIPT` | 3 |
+
+When your backend calls `jaza.consume({ customerId: 'cus_123', feature: 'SEND_SMS' })`, Jaza deducts 2 credits from that customer's wallet atomically and returns the new balance.
+
+## Credit lifecycle
+
+1. **Purchase**: Customer opens your TopUpModal, selects a bundle, and pays via MTN MoMo, M-Pesa, or card.
+2. **Credit**: Jaza receives the payment webhook, records a `TOPUP` ledger entry, and increases the wallet balance.
+3. **Spend**: Your backend calls `jaza.consume()` with a feature key. Jasa deducts the rate-card cost and records a `CONSUME` ledger entry.
+4. **Audit**: Every movement is append-only in the immutable ledger, so you can always trace a balance back to its source.
+
+## Next steps
+
+- Learn how [wallets](/concepts/wallets) hold credit balances per customer
+- Define your pricing with [rate cards](/concepts/rate-cards)
+- See the [consume guide](/guides/consume-credits) for integration code

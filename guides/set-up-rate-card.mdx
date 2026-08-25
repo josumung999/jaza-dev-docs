@@ -1,0 +1,125 @@
+---
+title: "Set Up Your Jaza Rate Card"
+sidebarTitle: "Rate Card Setup"
+description: "Define the credit cost of each billable action in your app — from AI prompts to SMS sends. This guide walks through creating and updating your rate card."
+---
+
+A rate card maps every billable action in your app to a fixed credit cost. Before you can call `jaza.consume()`, you must tell Jaza what each feature is worth. This guide shows you how to design your pricing, then push it to Jaza using the API or Node SDK.
+
+## Prerequisites
+
+- A Jaza secret key (test or live)
+- The `@jazadev/node` SDK installed in your backend
+
+## Step 1: Decide your feature keys
+
+Feature keys are the stable identifiers your backend passes to `consume()`. Pick short, descriptive names and never change them after shipping, because existing clients rely on them.
+
+| Feature key | What it represents |
+| --- | --- |
+| `ai_prompt` | One LLM prompt/response round |
+| `sms_send` | One outbound SMS message |
+| `image_gen` | One AI-generated image |
+| `api_call` | One heavy third-party API call |
+| `premium_support` | One priority support ticket |
+
+<Warning>
+  Changing a feature key after it is in production is a breaking change. Clients calling `consume()` with the old key will receive `FEATURE_NOT_IN_RATE_CARD`. Plan your keys up front and version new pricing with new keys if needed.
+</Warning>
+
+## Step 2: Choose credit costs
+
+Jaza credits are abstract units. A common convention is to anchor them to a dollar value you communicate to users. For example, if you sell bundles where 100 credits equals \$1:
+
+| Feature key | Credit cost | Approximate value |
+| --- | --- | --- |
+| `ai_prompt` | 10 | \$0.10 |
+| `sms_send` | 2 | \$0.02 |
+| `image_gen` | 25 | \$0.25 |
+| `api_call` | 5 | \$0.05 |
+| `premium_support` | 50 | \$0.50 |
+
+You can set any integer cost per feature. The credits are deducted atomically when `consume()` succeeds.
+
+## Step 3: Upsert your rate card
+
+Use the Node SDK or the REST API to create or update your rate card. The `upsert` call replaces the entire card atomically, so include every feature you want active.
+
+<CodeGroup>
+
+```typescript Node SDK
+import { Jaza } from "@jazadev/node";
+
+const jaza = new Jaza({
+  apiKey: process.env.JAZA_SECRET_KEY,
+});
+
+await jaza.rateCards.upsert({
+  features: [
+    { key: "ai_prompt", cost: 10 },
+    { key: "sms_send", cost: 2 },
+    { key: "image_gen", cost: 25 },
+    { key: "api_call", cost: 5 },
+    { key: "premium_support", cost: 50 },
+  ],
+});
+```
+
+```bash cURL
+curl -X POST https://api.jaza.dev/v1/rate-cards \
+  -H "Authorization: Bearer $JAZA_SECRET_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "features": [
+      { "key": "ai_prompt", "cost": 10 },
+      { "key": "sms_send", "cost": 2 },
+      { "key": "image_gen", "cost": 25 },
+      { "key": "api_call", "cost": 5 },
+      { "key": "premium_support", "cost": 50 }
+    ]
+  }'
+```
+
+</CodeGroup>
+
+## Step 4: Verify the rate card
+
+List your current rate card to confirm the features and costs are exactly what you expect.
+
+<CodeGroup>
+
+```typescript Node SDK
+const rateCard = await jaza.rateCards.list();
+console.log(rateCard.features);
+```
+
+```bash cURL
+curl https://api.jaza.dev/v1/rate-cards \
+  -H "Authorization: Bearer $JAZA_SECRET_KEY"
+```
+
+</CodeGroup>
+
+Expected response:
+
+```json
+{
+  "features": [
+    { "key": "ai_prompt", "cost": 10 },
+    { "key": "sms_send", "cost": 2 },
+    { "key": "image_gen", "cost": 25 },
+    { "key": "api_call", "cost": 5 },
+    { "key": "premium_support", "cost": 50 }
+  ]
+}
+```
+
+<Tip>
+  Keep a versioned copy of your rate card in your codebase (for example, `rate-card.json`). This makes code review easier and lets you diff changes before calling `upsert` in CI.
+</Tip>
+
+## Next steps
+
+- [Top up a user wallet](/guides/top-up-wallet) so they have credits to spend.
+- [Consume credits](/guides/consume-credits) when users trigger billable actions.
+- See the [Rate Cards API reference](/api-reference/rate-cards/list) for endpoint details.

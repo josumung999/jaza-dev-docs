@@ -1,0 +1,102 @@
+---
+title: "POST /credits/top-up — Initiate a Wallet Top-Up"
+sidebarTitle: "Top Up"
+description: "Create a top-up session for a customer. Returns a short-lived JWT your frontend passes to TopUpModal to launch the Mobile Money or card checkout."
+---
+
+Initiate a top-up session from your backend. The response contains a short-lived JWT that you pass to your frontend, which opens the `TopUpModal` so the customer can complete payment via Mobile Money or card.
+
+## Endpoint
+
+```text
+POST /credits/top-up
+```
+
+## Headers
+
+| Header | Value | Required |
+| --- | --- | --- |
+| `Authorization` | `Bearer <YOUR_SECRET_KEY>` | Yes |
+| `Content-Type` | `application/json` | Yes |
+| `Idempotency-Key` | A unique key for this operation | Recommended |
+
+## Request body
+
+<ParamField body="customerId" type="string" required>
+  The Jaza customer ID (`cus_...`) who will receive the credits.
+</ParamField>
+
+<ParamField body="bundleId" type="string" required>
+  The ID of the credit bundle the customer is purchasing.
+</ParamField>
+
+<ParamField body="currency" type="string" required>
+  Three-letter ISO currency code for the payment (for example, `KES`, `CDF`).
+</ParamField>
+
+## Response fields
+
+<ResponseField name="topUpId" type="string">
+  Unique identifier for this top-up session.
+</ResponseField>
+
+<ResponseField name="jwt" type="string">
+  Short-lived token (15 minutes) that your frontend passes to `TopUpModal`.
+</ResponseField>
+
+<ResponseField name="expiresAt" type="string">
+  ISO 8601 timestamp when the JWT expires.
+</ResponseField>
+
+## Examples
+
+<CodeGroup>
+
+```bash curl
+curl -X POST https://api.jaza.dev/v1/credits/top-up \
+  -H "Authorization: Bearer jz_test_sk_4eC39HqLyjWDarjtT1zdp7dc" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: topup-2026-08-01-001" \
+  -d '{
+    "customerId": "cus_9xY7zW2vQpLk",
+    "bundleId": "bundle_1000credits",
+    "currency": "KES"
+  }'
+```
+
+```js Node
+import { Jaza } from "@jazadev/node";
+
+const jaza = new Jaza({ secretKey: process.env.JAZA_SECRET_KEY });
+
+const session = await jaza.topUp({
+  customerId: "cus_9xY7zW2vQpLk",
+  bundleId: "bundle_1000credits",
+  currency: "KES",
+  idempotencyKey: "topup-2026-08-01-001",
+});
+
+// Pass session.jwt to your frontend for TopUpModal
+console.log(session.jwt);
+console.log(session.expiresAt);
+```
+
+</CodeGroup>
+
+Example response:
+
+```json
+{
+  "topUpId": "tu_5kL9mN2pQrSt",
+  "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresAt": "2026-08-01T15:35:00.000Z"
+}
+```
+
+<Note>
+  Credits are added to the wallet automatically when the payment webhook fires. You do not need to poll the API.
+</Note>
+
+<Warning>
+  Call this endpoint from your backend only. Never expose your secret key in client-side code.
+</Warning>

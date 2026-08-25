@@ -1,0 +1,118 @@
+---
+title: "Jaza REST API Reference"
+sidebarTitle: "Overview"
+description: "Base URL, authentication, versioning, pagination, idempotency, and error format for the Jaza REST API. Start here before using any endpoint."
+---
+
+The Jaza REST API lets you manage credit wallets, top up via Mobile Money or cards, and deduct credits idempotently from your backend. This page covers the base URL, how to authenticate, how responses are structured, and the headers you must send for safe, retry-friendly requests.
+
+## Base URL
+
+All API requests are sent to:
+
+```text
+https://api.jaza.dev/v1
+```
+
+Version `v1` is the current release. The version is part of the URL path.
+
+## Authentication
+
+Every request must include your secret key in the `Authorization` header using the Bearer scheme.
+
+```text
+Authorization: Bearer <YOUR_SECRET_KEY>
+```
+
+API keys start with a prefix that indicates the environment:
+
+- `jz_live_sk_` — production
+- `jz_test_sk_` — test/sandbox
+
+<Warning>
+  Never expose a secret key in client-side code or version control. Use test keys during development and keep live keys in a secure vault.
+</Warning>
+
+## Request and response format
+
+Jaza expects and returns JSON.
+
+- Send `Content-Type: application/json` for `POST` and `PUT` requests.
+- Responses are always JSON, even for errors.
+
+## Pagination
+
+List endpoints return a paginated envelope:
+
+```json
+{
+  "data": [...],
+  "nextCursor": "string | null"
+}
+```
+
+If `nextCursor` is not `null`, pass it as the `cursor` query parameter to fetch the next page:
+
+```text
+GET /rate-cards?cursor=eyJpZCI6ImFiYyJ9
+```
+
+## Idempotency
+
+`POST /credits/consume` and `POST /credits/top-up` support idempotency. Pass a unique `Idempotency-Key` header (UUID or your own nonce) on every request. Jaza stores the response for at least 24 hours. Repeating the same key with the same payload returns the stored response without side effects.
+
+<Warning>
+  Always send an `Idempotency-Key` on `consume` and `top-up` calls. This prevents double charges and duplicate top-up sessions if your network retries or your server crashes mid-request.
+</Warning>
+
+## Rate limits
+
+Each API key is limited to **1,000 requests per minute**. If you exceed the limit, Jaza responds with `429 Too Many Requests`. Retry after the number of seconds indicated in the `Retry-After` response header.
+
+<Tip>
+  This rate limit is a placeholder value. Contact Jaza support if you need a higher limit for your workload.
+</Tip>
+
+## Error format
+
+Errors use a consistent envelope:
+
+```json
+{
+  "error": {
+    "code": "INSUFFICIENT_BALANCE",
+    "message": "Customer balance is too low for this feature.",
+    "requestId": "req_7f8a9b2c3d4e"
+  }
+}
+```
+
+- `code` — a machine-readable error code you can switch on in your integration.
+- `message` — a human-readable description.
+- `requestId` — a unique identifier for this request. Include it when contacting support.
+
+## Complete example
+
+The following `curl` request shows a `consume` call with every required and recommended header:
+
+```bash
+curl -X POST https://api.jaza.dev/v1/credits/consume \
+  -H "Authorization: Bearer jz_test_sk_4eC39HqLyjWDarjtT1zdp7dc" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: consume-2026-08-01-001" \
+  -d '{
+    "feature": "SEND_SMS",
+    "userId": "cus_9xY7zW2vQpLk"
+  }'
+```
+
+Example response:
+
+```json
+{
+  "success": true,
+  "creditsUsed": 5,
+  "balanceAfter": 47,
+  "ledgerEntryId": "led_3mN8pQr5sTuV"
+}
+```

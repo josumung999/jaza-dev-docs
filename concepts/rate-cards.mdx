@@ -1,0 +1,44 @@
+---
+title: "Rate Cards: Define What Each Feature Costs"
+sidebarTitle: "Rate Cards"
+description: "A rate card maps your feature keys to credit costs. Define SEND_SMS=2 or AI_PROMPT=10 and Jaza enforces the pricing on every consume() call."
+---
+
+A rate card is the pricing layer between your app features and Jaza credits. It is a simple map of feature keys to positive integer credit costs. When your backend calls `jaza.consume()`, Jaza looks up the feature in your app's rate card, verifies the wallet has enough credits, and deducts the exact amount.
+
+## What a rate card is
+
+A rate card is an app-level dictionary where each key is a feature string and each value is a credit cost. Feature keys are strings you define, so you can name them whatever matches your product domain. Costs must be positive integers because Jaza does not support fractional credits.
+
+## Feature key naming
+
+Use descriptive, uppercase strings so they read clearly in dashboards and transaction history. Examples include `SEND_SMS`, `AI_PROMPT`, `PRINT_RECEIPT`, and `GENERATE_REPORT`. These names appear in the Jaza dashboard and in ledger entries, so clarity benefits both you and your customers.
+
+## How rate cards work
+
+- **Per-app scope**: A rate card belongs to your Jaza app, not to individual users. All customers in the same app are charged the same credit price for a given feature.
+- **Instant updates**: When you change a rate card, the new cost takes effect immediately on the next `consume()` call. There is no propagation delay.
+- **Enforced at consume time**: Jaza rejects a `consume()` call if the feature does not exist in the rate card or if the wallet lacks sufficient credits.
+
+## Example rate card
+
+```json
+{
+  "SEND_SMS": 2,
+  "AI_PROMPT": 10,
+  "PRINT_RECEIPT": 3,
+  "GENERATE_REPORT": 5
+}
+```
+
+With this rate card, calling `jaza.consume({ customerId: 'cus_123', feature: 'AI_PROMPT' })` costs 10 credits. Calling the same method with `feature: 'SEND_SMS'` costs 2 credits.
+
+<Tip>
+  Use descriptive feature names. They appear in the Jaza dashboard, transaction history, and ledger entries, so `AI_PROMPT` is clearer than `F1`.
+</Tip>
+
+## Next steps
+
+- See the [set up rate card guide](/guides/set-up-rate-card) for step-by-step configuration
+- Learn how [credits](/concepts/credits) connect money and features
+- Read the [consume credits guide](/guides/consume-credits) to integrate spending in your backend

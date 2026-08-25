@@ -1,0 +1,170 @@
+---
+title: "Top Up a User Wallet with Mobile Money"
+sidebarTitle: "Top Up Wallet"
+description: "Let users add credits via MTN MoMo, Airtel Money, M-Pesa, or card. This guide shows how the top-up flow works end to end in your app."
+---
+
+Jasa lets users add credits to their wallet using Mobile Money (MTN MoMo, Airtel Money, Orange, M-Pesa) or Visa/Mastercard. The top-up flow is designed to be secure and simple: your backend initiates the request, Jaza returns a one-time JWT, and your frontend renders a themed UI component that handles the payment. This guide walks through the complete flow.
+
+## How the flow works
+
+1. Your backend calls `topUp` with a customer ID and amount.
+2. Jaza returns a short-lived JWT that authorizes the payment session.
+3. Your frontend passes the JWT to the `TopUpModal` component.
+4. The user completes payment inside the modal.
+5. Jaza fires a `topup.completed` (or `topup.failed`) webhook to your backend.
+6. Credits appear in the user's wallet instantly.
+
+<Note>
+  Never initiate a top-up directly from client-side code. Always route the request through your backend so your secret key stays server-side and you control the amount.
+</Note>
+
+## Step 1: Call topUp from your backend
+
+Use the Node SDK to create a top-up session. The response contains a `token` field: the JWT your frontend needs.
+
+```typescript
+import { Jaza } from "@jazadev/node";
+
+const jaza = new Jaza({
+  apiKey: process.env.JAZA_SECRET_KEY,
+});
+
+const session = await jaza.topUp({
+  customerId: "cus_abc123",
+  amount: 500,           // amount in the smallest currency unit (e.g. KES cents)
+  currency: "KES",
+  idempotencyKey: `topup-${cus_abc123}-${Date.now()}`,
+});
+
+// Pass `session.token` to your frontend
+res.json({ token: session.token });
+```
+
+<ParamField body="customerId" type="string" required>
+  The Jaza customer ID (starts with `cus_`). Create the customer first if they do not exist.
+</ParamField>
+
+<ParamField body="amount" type="integer" required>
+  Amount in the smallest currency unit (e.g. 50000 for KES 500.00).
+</ParamField>
+
+<ParamField body="currency" type="string" required>
+  ISO 4217 currency code. Supported: `KES`, `CDF`, and other African non-USD currencies.
+</ParamField>
+
+<ParamField body="idempotencyKey" type="string" required>
+  A unique key for this top-up attempt. Jaza ignores duplicate requests within 24 hours.
+</ParamField>
+
+## Step 2: Pass the JWT to your frontend
+
+Expose an authenticated endpoint in your app that returns the token. Your client calls it when the user taps "Add credits".
+
+```typescript
+// In your frontend framework of choice
+async function openTopUp() {
+  const res = await fetch("/api/topup-session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ customerId: "cus_abc123", amount: 50000, currency: "KES" }),
+  });
+  const { token } = await res.json();
+  return token;
+}
+```
+
+## Step 3: Render TopUpModal
+
+Pass the token to the `TopUpModal` component. The component is themeable and handles provider selection, payment collection, and success states.
+
+<CodeGroup>
+
+```tsx React / Web
+import { TopUpModal } from "@jazadev/react";
+
+function TopUpScreen() {
+  const [token, setToken] = useState<string | null>(null);
+
+  return (
+    <TopUpModal
+      token={token}
+      theme={{
+        primary: "#0A2540",
+        borderRadius: 12,
+      }}
+      onCompleted={(topUp) => {
+        console.log("Top up completed:", topUp.id);
+      }}
+      onFailed={(error) => {
+        console.error("Top up failed:", error.message);
+      }}
+    />
+  );
+}
+```
+
+```tsx React Native / Expo
+import { TopUpModal } from "@jazadev/react-native";
+
+function TopUpScreen() {
+  const [token, setToken] = useState<string | null>(null);
+
+  return (
+    <TopUpModal
+      token={token}
+      theme={{
+        primary: "#0A2540",
+        borderRadius: 12,
+      }}
+      onCompleted={(topUp) => {
+        console.log("Top up completed:", topUp.id);
+      }}
+      onFailed={(error) => {
+        console.error("Top up failed:", error.message);
+      }}
+    />
+  );
+}
+```
+
+</CodeGroup>
+
+## Step 4: Handle the webhook
+
+After the user pays, Jaza sends a `topup.completed` event to your registered webhook URL. Use it to update your UI, send a push notification, or unlock features. See the [Handle Webhooks guide](/guides/handle-webhooks) for signature verification and retry behavior.
+
+Example payload:
+
+```json
+{
+  "event": "topup.completed",
+  "data": {
+    "topUpId": "tup_123456",
+    "customerId": "cus_abc123",
+    "amount": 50000,
+    "currency": "KES",
+    "creditsAdded": 500,
+    "newBalance": 750
+  }
+}
+```
+
+## Supported payment methods
+
+The `TopUpModal` automatically shows the providers available for the currency you passed:
+
+| Currency | Mobile Money providers | Cards |
+| --- | --- | --- |
+| KES | M-Pesa | Visa, Mastercard |
+| CDF | Orange, Airtel Money, MTN MoMo | Visa, Mastercard |
+
+<Tip>
+  If you want to show the user's current balance alongside the top-up flow, render the `FuelBalance` component. It syncs automatically and is fully themeable.
+</Tip>
+
+## Next steps
+
+- [Consume credits](/guides/consume-credits) when users perform billable actions.
+- [Handle webhooks](/guides/handle-webhooks) to confirm top-ups reliably.
+- Read the [Credits API reference](/api-reference/credits/top-up) for full endpoint details.

@@ -1,0 +1,73 @@
+---
+title: "GET /customers/:id/balance — Fetch Wallet Balance"
+sidebarTitle: "Get Balance"
+description: "Retrieve the current credit balance for a Jaza customer. Returns the live balance derived from the immutable ledger."
+---
+
+Fetch the real-time credit balance for a customer. The value is computed from the immutable ledger, so it always reflects all completed top-ups and consumes.
+
+## Endpoint
+
+```text
+GET /customers/:id/balance
+```
+
+## Path parameters
+
+<ParamField path="id" type="string" required>
+  The Jaza customer ID (starts with `cus_`).
+</ParamField>
+
+## Headers
+
+| Header | Value |
+| --- | --- |
+| `Authorization` | `Bearer <YOUR_SECRET_KEY>` |
+
+## Response fields
+
+<ResponseField name="customerId" type="string">
+  The customer ID you queried.
+</ResponseField>
+
+<ResponseField name="balance" type="integer">
+  Current credit balance.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  ISO 8601 timestamp of the latest ledger entry that affected this balance.
+</ResponseField>
+
+## Examples
+
+<CodeGroup>
+
+```bash curl
+curl https://api.jaza.dev/v1/customers/cus_9xY7zW2vQpLk/balance \
+  -H "Authorization: Bearer jz_test_sk_4eC39HqLyjWDarjtT1zdp7dc"
+```
+
+```js Node
+import { Jaza } from "@jazadev/node";
+
+const jaza = new Jaza({ secretKey: process.env.JAZA_SECRET_KEY });
+
+const result = await jaza.customers.getBalance("cus_9xY7zW2vQpLk");
+console.log(result.balance); // e.g. 47
+```
+
+</CodeGroup>
+
+Example response:
+
+```json
+{
+  "customerId": "cus_9xY7zW2vQpLk",
+  "balance": 47,
+  "updatedAt": "2026-08-01T14:22:10.000Z"
+}
+```
+
+<Note>
+  The balance is always derived from the ledger. It reflects all completed `consume` and `top-up` entries, not in-flight or pending top-ups.
+</Note>

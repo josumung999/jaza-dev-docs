@@ -1,0 +1,37 @@
+---
+title: "Supported Currencies and Payment Methods"
+sidebarTitle: "Currencies"
+description: "Jaza supports Mobile Money and card payments across multiple African currencies. This reference lists supported currencies, methods, and minimum top-up amounts."
+---
+
+Jaza is built for African payment rails, so you work in local currencies with no floating-point rounding surprises. Every amount is an integer in the local currency unit (for example, `100` for 100 KES, not `1.00`). This keeps wallet balances and rate cards consistent across you, your customers, and the ledger.
+
+## Supported currencies and payment methods
+
+| Currency | Code | Country | Payment Methods |
+| --- | --- | --- | --- |
+| Kenyan Shilling | KES | Kenya | M-Pesa, Card |
+| Congolese Franc | CDF | DR Congo | Airtel Money |
+| Ghanaian Cedi | GHS | Ghana | MTN MoMo, Card |
+| Nigerian Naira | NGN | Nigeria | Airtel Money, Card |
+| Ugandan Shilling | UGX | Uganda | MTN MoMo, Airtel Money |
+| Rwandan Franc | RWF | Rwanda | MTN MoMo |
+| Tanzanian Shilling | TZS | Tanzania | Airtel Money |
+
+## Currency availability by gateway
+
+<Tip>
+  Not every gateway supports every market in every country. Currency availability ultimately depends on your PawaPay or payment gateway coverage in the region. If you need a corridor that is not listed here, contact Jaza support.
+</Tip>
+
+## Pass amounts as integers
+
+<Note>
+  Always pass top-up and consume amounts as integers in the local currency. For example, to top up 500 KES, send `500` in the `amount` field, not `500.00` or `5.00`.
+</Note>
+
+Using integer amounts avoids floating-point rounding issues entirely. Wallet balances, rate cards, and the immutable ledger all store exact integer values.
+
+## USD pricing
+
+USD is not a primary currency in Jaza. Pricing is anchored in local currencies so your customers see familiar, stable amounts tied to their local economy. If you need cross-currency reporting, reach out to Jaza support for options.

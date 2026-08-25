@@ -1,0 +1,105 @@
+---
+title: "PUT /rate-cards — Create or Update Rate Card Entries"
+sidebarTitle: "Upsert Rate Cards"
+description: "Add or update feature pricing in your rate card. Pass an array of feature and creditsPerUse pairs. Changes take effect immediately on new consume() calls."
+---
+
+Use this endpoint to add new features to your rate card or change the credit cost of existing ones. Each entry in the `entries` array is upserted by `feature` key. The change takes effect immediately: the next `consume` call for that feature uses the new cost.
+
+## Endpoint
+
+```text
+PUT /rate-cards
+```
+
+## Headers
+
+| Header | Value |
+| --- | --- |
+| `Authorization` | `Bearer <YOUR_SECRET_KEY>` |
+| `Content-Type` | `application/json` |
+
+## Request body
+
+<ParamField body="entries" type="array" required>
+  Array of rate card entries to create or update.
+</ParamField>
+
+<ParamField body="entries[].feature" type="string" required>
+  The feature key. Case-sensitive: `SEND_SMS` and `send_sms` are treated as different features.
+</ParamField>
+
+<ParamField body="entries[].creditsPerUse" type="integer" required>
+  Credits deducted per use of this feature. Must be a positive integer.
+</ParamField>
+
+## Response fields
+
+<ResponseField name="updated" type="integer">
+  Number of entries created or updated.
+</ResponseField>
+
+<ResponseField name="entries" type="array">
+  The full list of rate card entries after the upsert.
+</ResponseField>
+
+## Examples
+
+<CodeGroup>
+
+```bash curl
+curl -X PUT https://api.jaza.dev/v1/rate-cards \
+  -H "Authorization: Bearer jz_test_sk_4eC39HqLyjWDarjtT1zdp7dc" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "entries": [
+      { "feature": "SEND_SMS", "creditsPerUse": 5 },
+      { "feature": "AI_SUMMARY", "creditsPerUse": 12 }
+    ]
+  }'
+```
+
+```js Node
+import { JazaAdmin } from "@jazadev/node";
+
+const jazaAdmin = new JazaAdmin({ secretKey: process.env.JAZA_SECRET_KEY });
+
+const result = await jazaAdmin.rateCards.upsert({
+  entries: [
+    { feature: "SEND_SMS", creditsPerUse: 5 },
+    { feature: "AI_SUMMARY", creditsPerUse: 12 },
+  ],
+});
+
+console.log(result.updated); // 2
+```
+
+</CodeGroup>
+
+Example response:
+
+```json
+{
+  "updated": 2,
+  "entries": [
+    {
+      "feature": "SEND_SMS",
+      "creditsPerUse": 5,
+      "updatedAt": "2026-08-01T11:20:00.000Z"
+    },
+    {
+      "feature": "AI_SUMMARY",
+      "creditsPerUse": 12,
+      "updatedAt": "2026-08-01T11:20:00.000Z"
+    }
+  ]
+}
+```
+
+<Warning>
+  Changing an existing feature's cost takes effect immediately on the next `consume` call. Communicate pricing changes to your users before updating the rate card.
+</Warning>
+
+<Note>
+  Feature keys are case-sensitive. `SEND_SMS` and `send_sms` are treated as different features.
+</Note>

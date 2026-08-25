@@ -1,0 +1,85 @@
+---
+title: "GET /rate-cards — List Your Rate Card Entries"
+sidebarTitle: "List Rate Cards"
+description: "Retrieve all feature-to-credit mappings in your app rate card. Use this to audit pricing or sync your frontend with current costs."
+---
+
+List every feature and its per-use credit cost in your app rate card. This is useful for auditing pricing or keeping your frontend in sync with what `consume` will charge.
+
+## Endpoint
+
+```text
+GET /rate-cards
+```
+
+## Headers
+
+| Header | Value |
+| --- | --- |
+| `Authorization` | `Bearer <YOUR_SECRET_KEY>` |
+
+## Response fields
+
+<ResponseField name="data" type="array">
+  List of rate card entries.
+</ResponseField>
+
+<ResponseField name="data[].feature" type="string">
+  The feature key. Case-sensitive.
+</ResponseField>
+
+<ResponseField name="data[].creditsPerUse" type="integer">
+  Credits deducted each time this feature is consumed.
+</ResponseField>
+
+<ResponseField name="data[].updatedAt" type="string">
+  ISO 8601 timestamp of the last change to this entry.
+</ResponseField>
+
+## Examples
+
+<CodeGroup>
+
+```bash curl
+curl https://api.jaza.dev/v1/rate-cards \
+  -H "Authorization: Bearer jz_test_sk_4eC39HqLyjWDarjtT1zdp7dc"
+```
+
+```js Node
+import { JazaAdmin } from "@jazadev/node";
+
+const jazaAdmin = new JazaAdmin({ secretKey: process.env.JAZA_SECRET_KEY });
+
+const { data } = await jazaAdmin.rateCards.list();
+console.log(data);
+// [
+//   { feature: "SEND_SMS", creditsPerUse: 5, updatedAt: "..." },
+//   { feature: "AI_SUMMARY", creditsPerUse: 12, updatedAt: "..." }
+// ]
+```
+
+</CodeGroup>
+
+Example response:
+
+```json
+{
+  "data": [
+    {
+      "feature": "SEND_SMS",
+      "creditsPerUse": 5,
+      "updatedAt": "2026-07-28T10:00:00.000Z"
+    },
+    {
+      "feature": "AI_SUMMARY",
+      "creditsPerUse": 12,
+      "updatedAt": "2026-07-30T08:45:00.000Z"
+    }
+  ],
+  "nextCursor": null
+}
+```
+
+<Tip>
+  Call this endpoint at app startup (or cache it) to show users accurate credit costs before they trigger billable actions.
+</Tip>

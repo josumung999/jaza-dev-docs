@@ -1,11 +1,11 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Jaza Docs",
+  "theme": "luma",
+  "name": "Jaza",
   "description": "Prepaid billing SDKs for African apps — credit wallets, Mobile Money top-ups, and settlements handled by Jaza.",
   "colors": {
     "primary": "#2DD4BF",
-    "light": "#5EEAD4",
+    "light": "#22C55E",
     "dark": "#0D9488"
   },
   "favicon": "/favicon.svg",
@@ -37,41 +37,106 @@
           "icon": "globe"
         }
       ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    },
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "index",
+              "quickstart",
+              "guides/authentication"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "guides/concepts",
+              "concepts/credits",
+              "concepts/wallets",
+              "concepts/ledger",
+              "concepts/rate-cards",
+              "concepts/webhooks"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/set-up-rate-card",
+              "guides/top-up-wallet",
+              "guides/consume-credits",
+              "guides/handle-webhooks"
+            ]
+          },
+          {
+            "group": "SDKs",
+            "pages": [
+              "sdks/node",
+              "sdks/react-native"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/errors",
+              "reference/supported-currencies",
+              "reference/changelog"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/introduction"
+            ]
+          },
+          {
+            "group": "Customers",
+            "pages": [
+              "api-reference/customers/create",
+              "api-reference/customers/get-balance"
+            ]
+          },
+          {
+            "group": "Credits",
+            "pages": [
+              "api-reference/credits/consume",
+              "api-reference/credits/top-up"
+            ]
+          },
+          {
+            "group": "Rate Cards",
+            "pages": [
+              "api-reference/rate-cards/list",
+              "api-reference/rate-cards/upsert"
+            ]
+          }
+        ]
+      }
+    ]
   },
   "navbar": {
     "links": [
       {
-        "label": "Support",
-        "href": "mailto:privacy@jaza.dev"
+        "href": "https://www.jaza.dev",
+        "label": "Website"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://jaza.dev/dashboard"
+      "label": "Join Waitlist",
+      "href": "https://www.jaza.dev/#waitlist"
     }
-  },
-  "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
-    ]
   },
   "footer": {
     "socials": {
       "x": "https://x.com/jazadev",
-      "github": "https://github.com/josumung999",
       "linkedin": "https://linkedin.com/company/jaza"
     }
   }

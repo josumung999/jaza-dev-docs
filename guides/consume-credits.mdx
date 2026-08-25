@@ -1,0 +1,162 @@
+---
+title: "Consume Credits from Your Backend"
+sidebarTitle: "Consume Credits"
+description: "Call jaza.consume() on every billable action. This guide covers idempotent deductions, handling insufficient balance, and best practices for reliable billing."
+---
+
+The `jaza.consume()` method is the core of Jaza billing. It deducts credits atomically from a customer's wallet when they perform a billable action in your app. The call is idempotent and race-safe, so retries never double-charge. This guide shows the exact request, response, and error patterns you need to handle in production.
+
+## Prerequisites
+
+- A [rate card set up](/guides/set-up-rate-card) with feature keys and costs
+- A customer with a positive credit balance (or a plan to handle `INSUFFICIENT_BALANCE`)
+- Your Jaza secret key configured server-side
+
+## Step 1: Call consume()
+
+Call `consume()` from your backend immediately after the billable action succeeds. Pass the customer ID, the feature key from your rate card, and an idempotency key.
+
+<CodeGroup>
+
+```typescript Node SDK
+import { Jaza } from "@jazadev/node";
+
+const jaza = new Jaza({
+  apiKey: process.env.JAZA_SECRET_KEY,
+});
+
+const result = await jaza.consume({
+  customerId: "cus_abc123",
+  feature: "ai_prompt",
+  idempotencyKey: `consume-cus_abc123-ai_prompt-${Date.now()}`,
+});
+
+console.log("New balance:", result.balance);
+```
+
+```bash cURL
+curl -X POST https://api.jaza.dev/v1/credits/consume \
+  -H "Authorization: Bearer $JAZA_SECRET_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: consume-cus_abc123-ai_prompt-$(date +%s)" \
+  -d '{
+    "customerId": "cus_abc123",
+    "feature": "ai_prompt"
+  }'
+```
+
+</CodeGroup>
+
+<ParamField body="customerId" type="string" required>
+  The Jaza customer ID (starts with `cus_`).
+</ParamField>
+
+<ParamField body="feature" type="string" required>
+  A feature key defined in your active rate card.
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string" required>
+  A unique key for this deduction. Jaza returns the same result for duplicate requests.
+</ParamField>
+
+## Step 2: Handle the success response
+
+On success, Jaza returns the customer's new credit balance and a transaction ID you can log for audit purposes.
+
+```json
+{
+  "customerId": "cus_abc123",
+  "feature": "ai_prompt",
+  "cost": 10,
+  "balance": 240,
+  "transactionId": "txn_789xyz"
+}
+```
+
+<ResponseField name="balance" type="integer">
+  The customer's wallet balance after the deduction.
+</ResponseField>
+
+<ResponseField name="transactionId" type="string">
+  An immutable ledger transaction ID. Store this if you need to reconcile later.
+</ResponseField>
+
+## Step 3: Handle errors
+
+Your backend must handle three common error cases so users get clear feedback.
+
+### 402 INSUFFICIENT\_BALANCE
+
+The customer does not have enough credits for this feature. Prompt them to top up before trying again.
+
+```json
+{
+  "error": {
+    "code": "INSUFFICIENT_BALANCE",
+    "message": "Customer balance (2) is less than feature cost (10)."
+  }
+}
+```
+
+### 404 CUSTOMER\_NOT\_FOUND
+
+The customer ID does not exist in your Jaza environment. Check that you created the customer or verify the ID format.
+
+```json
+{
+  "error": {
+    "code": "CUSTOMER_NOT_FOUND",
+    "message": "No customer found with id cus_unknown."
+  }
+}
+```
+
+### 422 FEATURE\_NOT\_IN\_RATE\_CARD
+
+The feature key is missing from your active rate card. This usually means a typo or a deployment mismatch between your rate card and your `consume()` calls.
+
+```json
+{
+  "error": {
+    "code": "FEATURE_NOT_IN_RATE_CARD",
+    "message": "Feature 'ai_promp' is not defined in the active rate card."
+  }
+}
+```
+
+## Idempotency best practices
+
+Always include an `Idempotency-Key` header on every `consume` request. If your server retries because of a network timeout, Jaza returns the original result without deducting credits a second time.
+
+A good idempotency key is deterministic for the specific billing event. For example, combine the customer ID, feature key, and a unique action identifier from your app:
+
+```typescript
+const idempotencyKey = `consume-${customerId}-${feature}-${messageId}`;
+```
+
+<Warning>
+  Do not use only a timestamp as the idempotency key. If your first request actually succeeded but the response timed out, a second call with a new timestamp would deduct credits twice.
+</Warning>
+
+## Charge on delivery, not upfront
+
+Call `consume()` after your feature runs successfully. If the feature fails mid-flight, the user is not charged.
+
+```typescript
+// Good: charge after the work is done
+const response = await openai.chat.completions.create({ ... });
+await jaza.consume({ customerId, feature: "ai_prompt", idempotencyKey });
+return response;
+```
+
+The only exception is when the feature itself is expensive to run speculatively (for example, a long-running GPU job). In that case, you may prefer to deduct credits first and refund on failure using a compensating transaction.
+
+<Tip>
+  Log every `transactionId` from successful consume calls. If a user disputes a charge, the transaction ID lets you trace the exact deduction in the Jaza ledger.
+</Tip>
+
+## Next steps
+
+- [Set up your rate card](/guides/set-up-rate-card) if you have not defined feature costs yet.
+- [Top up a wallet](/guides/top-up-wallet) so users can add credits.
+- See the [Credits API reference](/api-reference/credits/consume) for full endpoint details.

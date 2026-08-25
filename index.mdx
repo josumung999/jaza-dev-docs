@@ -1,7 +1,7 @@
 ---
-title: "Introduction"
-description: "Prepaid billing SDKs for African apps. Credit wallets, Mobile Money top-ups, and settlements — without running your own aggregator."
-keywords: ["jaza", "prepaid", "mobile money", "credits", "africa", "expo", "node"]
+title: "Jaza: Prepaid Billing Infrastructure for African Apps"
+description: "Jaza gives African app developers credit wallets, Mobile Money top-ups, and an immutable ledger. Ship billing in minutes, not weeks."
+sidebarTitle: "Introduction"
 ---
 
 Jaza is **prepaid billing infrastructure** for African apps. You give every user a credit wallet, let them top up with Mobile Money, and meter features against a ledger your backend can trust.
@@ -12,9 +12,10 @@ Jaza is **prepaid billing infrastructure** for African apps. You give every user
   <Card title="You ship" icon="code">
     - Feature costs and credit bundles in the [dashboard](https://jaza.dev/dashboard)
     - Customers via `@jazadev/node`
-    - Balance + top-up UI via `@jazadev/react-native`
+    - Balance \+ top-up UI via `@jazadev/react-native`
     - `consume` when users use a feature
   </Card>
+
   <Card title="Jaza handles" icon="building-columns">
     - Mobile Money collection across supported African markets
     - FX into a unified credit / USD model
@@ -47,7 +48,7 @@ sequenceDiagram
 
 1. **Dashboard** — create an app, configure markets & bundles, copy sandbox keys.
 2. **Backend SDK** — `@jazadev/node` with your **secret** key.
-3. **Mobile SDK** — `@jazadev/react-native` with your **publishable** key + short-lived top-up JWT from your server.
+3. **Mobile SDK** — `@jazadev/react-native` with your **publishable** key \+ short-lived top-up JWT from your server.
 
 ## Choose your stack
 
@@ -63,7 +64,7 @@ Pick the combination that matches your app. Docs guide you with that stack in mi
 
 <View title="React Web + Node" icon="react">
   <Card title="Coming soon">
-    Web SDK is not published yet. Use Expo + Node for production integrations, or follow [@jazadev/node](/sdks/node) for server-only metering.
+    Web SDK is not published yet. Use Expo \+ Node for production integrations, or follow [@jazadev/node](/sdks/node) for server-only metering.
   </Card>
 </View>
 
@@ -77,14 +78,17 @@ Pick the combination that matches your app. Docs guide you with that stack in mi
 
 <CardGroup cols={2}>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
-    End-to-end Expo + Node integration.
+    End-to-end Expo \+ Node integration.
   </Card>
+
   <Card title="Concepts" icon="book" href="/guides/concepts">
     Credits, sandbox/live, and settlements.
   </Card>
+
   <Card title="Node SDK" icon="server" href="/sdks/node">
     `@jazadev/node` reference.
   </Card>
+
   <Card title="React Native SDK" icon="mobile" href="/sdks/react-native">
     Provider, balance widget, top-up button.
   </Card>

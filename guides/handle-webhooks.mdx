@@ -1,0 +1,162 @@
+---
+title: "Handle Jaza Webhooks in Your App"
+sidebarTitle: "Handle Webhooks"
+description: "Configure your webhook endpoint, verify signatures, and react to topup.completed and topup.failed events. A complete Node.js walkthrough."
+---
+
+Jaza sends webhook events to your backend so you can react to top-up completions, failures, and other account activity in real time. This guide shows you how to build a secure endpoint, verify event signatures, and process events reliably without blocking Jaza's retry loop.
+
+## Prerequisites
+
+- A publicly reachable HTTPS endpoint (for example, an Express.js app deployed behind HTTPS)
+- Your Jaza webhook secret (found in the Dashboard under **Developers \> Webhooks**)
+- The `@jazadev/node` SDK (optional, but recommended for signature verification)
+
+## Step 1: Create an endpoint in your app
+
+Expose a `POST` route that accepts raw JSON. Keep the route lightweight: parse the payload, verify the signature, queue any heavy work, and return `200 OK` immediately.
+
+```typescript
+import express, { Request, Response } from "express";
+import { Jaza } from "@jazadev/node";
+
+const app = express();
+
+// IMPORTANT: use express.raw() or a body parser that preserves the raw body
+// so signature verification works on the exact bytes Jaza sent.
+app.post(
+  "/webhooks/jaza",
+  express.raw({ type: "application/json" }),
+  (req: Request, res: Response) => {
+    const payload = req.body; // Buffer
+    const signature = req.headers["x-jaza-signature"] as string;
+
+    // Verify before acting
+    const event = jaza.webhooks.constructEvent(
+      payload,
+      signature,
+      process.env.JAZA_WEBHOOK_SECRET
+    );
+
+    // Acknowledge immediately
+    res.status(200).send("OK");
+
+    // Process asynchronously
+    processWebhook(event).catch((err) => {
+      console.error("Webhook processing failed:", err);
+    });
+  }
+);
+
+async function processWebhook(event: any) {
+  switch (event.type) {
+    case "topup.completed":
+      await handleTopUpCompleted(event.data);
+      break;
+    case "topup.failed":
+      await handleTopUpFailed(event.data);
+      break;
+    default:
+      console.log("Unhandled event type:", event.type);
+  }
+}
+```
+
+<Warning>
+  Always return a `2xx` response as quickly as possible. Jaza retries up to 3 times on non-2xx responses with exponential backoff. If your handler runs heavy logic synchronously, you risk timeouts and duplicate event processing.
+</Warning>
+
+## Step 2: Register the endpoint in your Jaza dashboard
+
+1. Open the [Jaza Dashboard](https://dashboard.jaza.dev) and go to **Developers \> Webhooks**.
+2. Click **Add endpoint**.
+3. Enter your HTTPS URL (for example, `https://api.yourapp.com/webhooks/jaza`).
+4. Select the events you want to receive. At minimum, enable:
+   - `topup.completed`
+   - `topup.failed`
+5. Save the endpoint and copy the **Webhook secret** into your environment as `JAZA_WEBHOOK_SECRET`.
+
+## Step 3: Verify the signature
+
+Jaza signs every webhook with an HMAC-SHA256 signature in the `x-jaza-signature` header. Verify it before trusting the payload. If you are not using the Node SDK, implement the check manually:
+
+```typescript
+import crypto from "crypto";
+
+function verifySignature(
+  payload: Buffer,
+  signature: string,
+  secret: string
+): boolean {
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(payload)
+    .digest("hex");
+
+  // Prevent timing attacks with a constant-time comparison
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expected)
+  );
+}
+```
+
+<Warning>
+  Never process a webhook payload without verifying the signature first. An unverified endpoint could be exploited by anyone who discovers the URL.
+</Warning>
+
+## Step 4: Handle topup.completed
+
+When a top-up succeeds, update your UI, send a push notification, or unlock any gated features.
+
+```typescript
+async function handleTopUpCompleted(data: any) {
+  const { customerId, topUpId, creditsAdded, newBalance } = data;
+
+  await db.users.updateOne(
+    { jazaCustomerId: customerId },
+    {
+      $inc: { creditBalance: creditsAdded },
+      $set: { lastTopUpAt: new Date() },
+    }
+  );
+
+  await push.send(customerId, {
+    title: "Credits added",
+    body: `${creditsAdded} credits are now in your wallet.`,
+  });
+
+  console.log(`Top up ${topUpId} completed. New balance: ${newBalance}`);
+}
+```
+
+## Step 5: Handle topup.failed
+
+Notify the user so they can retry or choose a different payment method.
+
+```typescript
+async function handleTopUpFailed(data: any) {
+  const { customerId, topUpId, failureReason } = data;
+
+  await push.send(customerId, {
+    title: "Top up failed",
+    body: `We could not add credits. Reason: ${failureReason}. Tap to retry.`,
+  });
+
+  console.warn(`Top up ${topUpId} failed for ${customerId}: ${failureReason}`);
+}
+```
+
+## Retry behavior
+
+Jaza retries failed deliveries up to 3 times with exponential backoff. If your endpoint is down for maintenance, events queue on Jaza's side and retry automatically. After 3 failures, the event is marked dead and you can replay it from the Dashboard.
+
+<Note>
+  Because retries exist, make your handlers idempotent. Use the `topUpId` or `transactionId` as a deduplication key in your database so duplicate events do not double-credit a user.
+</Note>
+
+## Next steps
+
+- [Top up a wallet](/guides/top-up-wallet) to trigger webhooks in your test environment.
+- Read the [webhooks concept page](/concepts/webhooks) for the full event catalog and payload schema.
+- See the [Errors reference](/reference/errors) for webhook-related error codes.
