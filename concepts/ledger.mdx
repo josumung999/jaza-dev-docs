@@ -1,63 +1,28 @@
 ---
-title: "The Jaza Immutable Ledger"
+title: "Ledger"
+description: "Every credit movement is recorded so balances stay auditable and trustworthy."
 sidebarTitle: "Ledger"
-description: "Every credit movement in Jaza is recorded as an immutable ledger entry. No balance is ever rewritten — your audit trail is always complete and trustworthy."
 ---
 
-The Jaza ledger is an append-only log of every credit event that occurs in your app. Rather than storing a balance number that gets overwritten, Jaza derives each wallet's balance from the sum of its ledger entries. This design guarantees that your audit trail is complete, tamper-evident, and easy to reconcile.
+Jaza records credit movements so you can trust balances and reconcile activity. Top-ups and consumes produce ledger history you can inspect in the dashboard (credit activity).
 
-## What the ledger records
+## What gets recorded
 
-Every time credits move, Jaza appends a new ledger entry. The entry captures the event type, amount, customer, and context so you can trace any balance back to its source.
+Typical movements include:
 
-### Entry types
-
-| Type | Description |
+| Kind | Description |
 | --- | --- |
-| `TOPUP` | Credits added from a payment |
-| `CONSUME` | Credits deducted by a feature call |
-| `REFUND` | Credits returned to a customer (planned) |
+| Top-up / credit | Credits added after a successful payment |
+| Consume / debit | Credits deducted for a feature or amount |
 
-### Entry fields
+Each consume should carry an **idempotency key** from your backend so retries do not double-charge.
 
-Each ledger entry contains the following fields:
+## Why it matters
 
-- `id`: Unique identifier for the entry
-- `type`: Event type (`TOPUP`, `CONSUME`, or `REFUND`)
-- `amount`: Number of credits moved (positive integer)
-- `feature`: Feature key, present only for `CONSUME` entries
-- `customer_id`: The wallet owner (`cus_` ID)
-- `created_at`: ISO 8601 timestamp of the event
-- `idempotency_key`: The key you passed to prevent duplicate processing
-
-## Why immutability matters
-
-Because the ledger is append-only, balances are never edited in place. To find a customer's current balance, Jaza sums every entry for that `customer_id`. This means:
-
-- **No balance drift**: There is no stored balance field that can silently diverge from the transaction history.
-- **Trivial auditing**: Any discrepancy can be resolved by summing the ledger entries for a customer.
-- **Full traceability**: Every top-up and every feature consumption is preserved with its original idempotency key.
-
-## Example ledger entry
-
-Here is what a single `CONSUME` entry looks like in the ledger:
-
-```json
-{
-  "id": "led_abc123def456",
-  "type": "CONSUME",
-  "amount": 10,
-  "feature": "AI_PROMPT",
-  "customer_id": "cus_abc123def",
-  "created_at": "2026-08-15T09:23:17Z",
-  "idempotency_key": "idempotency_20260815_001"
-}
-```
-
-A `TOPUP` entry has the same shape but omits the `feature` field and uses `type: "TOPUP"`.
+- Trace a balance back to purchases and feature usage.
+- Safe retries with idempotency.
+- Dashboard analytics and credit activity stay consistent with what the SDKs report.
 
 ## Next steps
 
-- Learn how [credits](/concepts/credits) move between money and features
-- See how [wallets](/concepts/wallets) expose balances to your customers
-- Read the [consume credits guide](/guides/consume-credits) for integration patterns
+- [Credits](/concepts/credits) · [Consume credits](/guides/consume-credits) · [Node SDK](/sdks/node)

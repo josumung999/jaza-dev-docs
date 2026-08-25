@@ -1,37 +1,33 @@
 ---
-title: "Supported Currencies and Payment Methods"
+title: "Supported currencies"
+description: "Local Mobile Money currencies Jaza collects in supported African markets. Enable markets in the dashboard."
 sidebarTitle: "Currencies"
-description: "Jaza supports Mobile Money and card payments across multiple African currencies. This reference lists supported currencies, methods, and minimum top-up amounts."
 ---
 
-Jaza is built for African payment rails, so you work in local currencies with no floating-point rounding surprises. Every amount is an integer in the local currency unit (for example, `100` for 100 KES, not `1.00`). This keeps wallet balances and rate cards consistent across you, your customers, and the ledger.
+Users top up in **local currency** via Mobile Money (and card where enabled). Enable markets in the [dashboard](https://jaza.dev/dashboard); Jaza collects and settles — you do **not** depend on your own PawaPay merchant coverage.
 
-## Supported currencies and payment methods
+## Markets (typical corridors)
 
-| Currency | Code | Country | Payment Methods |
-| --- | --- | --- | --- |
-| Kenyan Shilling | KES | Kenya | M-Pesa, Card |
-| Congolese Franc | CDF | DR Congo | Airtel Money |
-| Ghanaian Cedi | GHS | Ghana | MTN MoMo, Card |
-| Nigerian Naira | NGN | Nigeria | Airtel Money, Card |
-| Ugandan Shilling | UGX | Uganda | MTN MoMo, Airtel Money |
-| Rwandan Franc | RWF | Rwanda | MTN MoMo |
-| Tanzanian Shilling | TZS | Tanzania | Airtel Money |
+Availability is controlled per app in the dashboard. Common corridors include:
 
-## Currency availability by gateway
+| Currency | Code | Examples of rails |
+| --- | --- | --- |
+| Kenyan Shilling | KES | M-Pesa, card (where enabled) |
+| Congolese Franc | CDF | Airtel Money |
+| Ghanaian Cedi | GHS | MTN MoMo, card |
+| Nigerian Naira | NGN | Mobile Money / card where enabled |
+| Ugandan Shilling | UGX | MTN MoMo, Airtel Money |
+| Rwandan Franc | RWF | MTN MoMo |
+| Tanzanian Shilling | TZS | Airtel Money |
+
+Confirm the live list for your app under **App settings → markets**. Contact support if you need a corridor that is not listed for your account.
+
+## Credits vs currency
+
+- Customers pay in local currency; wallets hold **credits**.
+- Bundle prices and feature costs are configured in the dashboard.
+- Merchant settlements are USD-oriented through Jaza — see [Settlements](/concepts/settlements).
 
 <Tip>
-  Not every gateway supports every market in every country. Currency availability ultimately depends on your PawaPay or payment gateway coverage in the region. If you need a corridor that is not listed here, contact Jaza support.
+  You do not set up a PawaPay account or maintain FX tables. Enable markets; Jaza runs collection and settlement.
 </Tip>
-
-## Pass amounts as integers
-
-<Note>
-  Always pass top-up and consume amounts as integers in the local currency. For example, to top up 500 KES, send `500` in the `amount` field, not `500.00` or `5.00`.
-</Note>
-
-Using integer amounts avoids floating-point rounding issues entirely. Wallet balances, rate cards, and the immutable ledger all store exact integer values.
-
-## USD pricing
-
-USD is not a primary currency in Jaza. Pricing is anchored in local currencies so your customers see familiar, stable amounts tied to their local economy. If you need cross-currency reporting, reach out to Jaza support for options.

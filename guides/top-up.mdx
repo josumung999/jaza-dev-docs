@@ -1,0 +1,122 @@
+---
+title: "Top up"
+description: "Issue a top-up JWT with @jazadev/node, then open Mobile Money checkout with JazaTopUpButton in React Native."
+sidebarTitle: "Top up"
+keywords: ["top-up", "mobile money", "jwt", "JazaTopUpButton"]
+---
+
+Top-up always uses **both** SDKs:
+
+1. **Backend** — `@jazadev/node` creates a top-up session and returns a short-lived JWT.
+2. **Mobile** — `@jazadev/react-native` opens the MoMo sheet after `onRequestToken` returns that JWT.
+
+```
+App → your BFF → jaza.topUp({ customerId }) → { token }
+App → JazaTopUpButton → sheet (bundles, quote, deposit)
+```
+
+## Prerequisites
+
+- [Dashboard setup](/guides/dashboard-setup) with markets and at least one bundle
+- A Jaza customer id stored on your user (`cus_…`)
+- Secret key on the server; publishable key in the Expo app
+
+## 1. Backend: issue a top-up token
+
+```ts
+import { Jaza } from '@jazadev/node';
+
+const jaza = new Jaza({
+  secretKey: process.env.JAZA_SECRET_KEY!,
+  publicKey: process.env.JAZA_PUBLIC_KEY!,
+});
+
+// POST /jaza/top-up-token — resolve customerId from your session
+app.post('/jaza/top-up-token', async (req, res) => {
+  const session = await jaza.topUp({
+    customerId: req.user.jazaCustomerId,
+  });
+  res.json({ token: session.token });
+});
+```
+
+Optional: poll session status with `jaza.check({ topUpId: session.id })`.
+
+## 2. Backend: expose balance for the widget
+
+```ts
+app.get('/jaza/balance', async (req, res) => {
+  const wallet = await jaza.getBalance({
+    customerId: req.user.jazaCustomerId,
+  });
+  res.json({ balanceCredits: wallet.balanceCredits });
+});
+```
+
+## 3. Mobile: provider + button
+
+Wrap the app with `GestureHandlerRootView` and `JazaProvider`, then render `JazaBalanceWidget` and `JazaTopUpButton`.
+
+```tsx
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import {
+  JazaProvider,
+  JazaBalanceWidget,
+  JazaTopUpButton,
+} from '@jazadev/react-native';
+
+const API_BASE = process.env.EXPO_PUBLIC_API_URL!;
+
+export default function RootLayout({ children }) {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <JazaProvider
+        publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
+        getBalance={async () => {
+          const res = await fetch(`${API_BASE}/jaza/balance`, {
+            credentials: 'include',
+          });
+          const data = await res.json();
+          return data.balanceCredits as number;
+        }}
+        onTopUpComplete={({ credits }) => {
+          console.log('Top-up completed', credits);
+        }}
+      >
+        {children}
+      </JazaProvider>
+    </GestureHandlerRootView>
+  );
+}
+```
+
+```tsx
+<JazaTopUpButton
+  label="Top up credits"
+  onRequestToken={async () => {
+    const res = await fetch(`${API_BASE}/jaza/top-up-token`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Could not start top-up');
+    const data = await res.json();
+    return data.token as string;
+  }}
+/>
+```
+
+## What the user sees
+
+1. Tap **Top up** → app requests JWT from your BFF.
+2. Sheet opens → bundles and current balance.
+3. User picks a pack, enters phone / country / currency, confirms quote.
+4. Payment runs; SDK polls until success or failure.
+5. Balance refreshes via `getBalance`.
+
+<Tip>
+  Jaza collects MoMo and settles to you. You do not configure PawaPay or FX yourself.
+</Tip>
+
+## Next steps
+
+- [Consume credits](/guides/consume-credits) · [React Native SDK](/sdks/react-native) · [Node SDK](/sdks/node)

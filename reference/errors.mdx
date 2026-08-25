@@ -1,52 +1,39 @@
 ---
-title: "Jaza API Error Codes and Troubleshooting"
+title: "Errors"
+description: "How JazaError surfaces from the Node SDK, common codes, and safe retry guidance."
 sidebarTitle: "Errors"
-description: "Every Jaza API error has a machine-readable code, an HTTP status, and a human message. This reference covers all error codes and how to handle them."
 ---
 
-Jaza returns structured error envelopes so your code can distinguish between a bad request, an exhausted wallet, and a transient server issue. This page describes the error envelope format, lists every machine-readable code, and tells you exactly when to retry.
+`@jazadev/node` throws `JazaError` with `statusCode`, `code`, and `raw` when the API rejects a call. Switch on `code` in your BFF; do not parse human messages.
 
-## Error envelope
-
-All Jaza API errors share this JSON envelope:
+## Typical envelope
 
 ```json
 {
   "error": {
     "code": "INSUFFICIENT_BALANCE",
-    "message": "Customer balance is too low for this request.",
-    "requestId": "req_8f19a2c7d4e0"
+    "message": "Customer balance is too low for this request."
   }
 }
 ```
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `code` | `string` | Machine-readable error code you can switch on in code. |
-| `message` | `string` | Human-readable explanation (do not parse this). |
-| `requestId` | `string` | Unique request ID; include it when you contact support. |
+## Common codes
 
-## Error codes
+| Situation | What to do |
+| --- | --- |
+| Insufficient credits | Prompt [top-up](/guides/top-up); do not retry the same consume until funded |
+| Unknown customer | Verify `cus_…` id and environment (sandbox vs live) |
+| Unknown feature | Confirm `featureCode` exists under **Features** in the dashboard |
+| Auth / key issues | Check secret key prefix (`jz_test_sk_` vs `jz_live_sk_`) and that the key is server-only |
+| Rate limits / 5xx | Retry with backoff; keep the same idempotency key on consume |
 
-| HTTP Status | Code | Meaning | Action |
-| --- | --- | --- | --- |
-| 400 | `INVALID_REQUEST` | Malformed request body or missing required fields | Fix the request payload and resend. |
-| 401 | `UNAUTHORIZED` | Missing or invalid API key | Check that you passed a valid key in the `Authorization: Bearer <key>` header. |
-| 402 | `INSUFFICIENT_BALANCE` | Customer has too few credits for the requested deduction | Prompt the user to top up before trying again. |
-| 403 | `FORBIDDEN` | Your API key lacks permission for this action | Verify the key's scopes in the Jaza Dashboard. |
-| 404 | `CUSTOMER_NOT_FOUND` | No customer exists with the provided ID | Double-check that the customer ID begins with `cus_` and is correct. |
-| 409 | `IDEMPOTENCY_CONFLICT` | Same idempotency key with a different payload | Ensure you reuse idempotency keys only with identical requests. |
-| 422 | `FEATURE_NOT_IN_RATE_CARD` | Feature key is not defined in the customer's rate card | Add the missing feature to your rate card first. |
-| 429 | `RATE_LIMIT_EXCEEDED` | You sent too many requests too fast | Back off and retry with exponential backoff. |
-| 500 | `INTERNAL_ERROR` | Jaza server error | Retry with exponential backoff; contact support if the error persists. |
+Exact HTTP statuses and codes can vary by endpoint — log `JazaError.raw` when debugging.
 
 ## Retry guidance
 
+- **Safe to retry** with the **same** `idempotencyKey`: network timeouts and transient 5xx on `consume`.
+- **Do not retry** unchanged when the wallet is empty or the feature code is wrong — fix the input or send the user to top up.
+
 <Note>
-  Always use an `Idempotency-Key` header on `consume` and `top-up` calls so retries are safe and do not double-charge a wallet.
+  Always pass `idempotencyKey` on `consume` so retries cannot double-charge.
 </Note>
-
-- **Retry these codes**: `429` and any `5xx`. Use exponential backoff plus jitter (for example, base delay of 500 ms, doubling each attempt, and a random jitter of 0–300 ms).
-- **Do not retry these codes**: `400`, `401`, `402`, `403`, `404`, `409`, `422`. These indicate client, permission, or data problems that will not resolve by repeating the same request.
-
-If you follow the retry rules above, your integration is safe against transient network issues and server hiccups without risking duplicate transactions.

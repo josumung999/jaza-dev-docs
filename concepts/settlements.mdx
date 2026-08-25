@@ -1,0 +1,27 @@
+---
+title: "Settlements"
+description: "Jaza collects Mobile Money and settles to you — you do not manage multi-currency aggregator ops."
+sidebarTitle: "Settlements"
+---
+
+When users top up, Jaza:
+
+1. Collects local currency via Mobile Money (and card where enabled).
+2. Credits the user’s wallet in **credits**.
+3. Settles value to you through merchant settlement flows in the dashboard (USD-oriented balances and payouts).
+
+## What you do not do
+
+- Open or operate a PawaPay (or similar) merchant account for collection.
+- Maintain per-country FX tables for MoMo deposits.
+- Build a second ledger for currency conversion.
+
+## What you do
+
+- Enable markets, features, and bundles in the dashboard.
+- Integrate `@jazadev/node` + `@jazadev/react-native`.
+- Use dashboard analytics and payouts for business reporting.
+
+## Sandbox vs live
+
+Operational data (wallets, top-ups, consumption, settlement wallets) is isolated by environment. Use test keys until flows look right, then switch to live.

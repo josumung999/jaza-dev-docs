@@ -1,62 +1,42 @@
 ---
 title: "Authentication"
-description: "Secret keys, publishable keys, and top-up JWTs — how credentials work with the Jaza SDKs."
-keywords: ["api keys", "secret key", "publishable key", "jwt", "authentication"]
+description: "Secret keys on the server, publishable keys in the app, and short-lived top-up JWTs."
+sidebarTitle: "Authentication"
 ---
 
-Jaza uses two long-lived keys per environment, plus short-lived top-up tokens for the mobile SDK.
+Jaza uses two long-lived keys plus a short-lived top-up token.
 
-## Key types
+## Keys
 
-| Credential | SDK | Safe in client? |
-|------------|-----|-----------------|
-| Secret key (`jz_*_sk_*`) | `@jazadev/node` | No — server only |
-| Publishable key (`jz_*_pk_*`) | `@jazadev/react-native` | Yes |
-| Top-up JWT | Issued by `jaza.topUp`, passed into the RN sheet | Yes — short-lived |
-
-<Warning>
-  Anyone with your secret key can create customers, debit wallets, and issue top-up sessions. Rotate immediately if exposed ([dashboard](https://jaza.dev/dashboard) → API keys).
-</Warning>
-
-## Backend: secret key
+| Key | Prefix (sandbox / live) | Where |
+| --- | --- | --- |
+| Secret | `jz_test_sk_…` / `jz_live_sk_…` | Server only — `@jazadev/node` |
+| Publishable | `jz_test_pk_…` / `jz_live_pk_…` | Mobile app — `@jazadev/react-native` |
 
 ```ts
 import { Jaza } from '@jazadev/node';
 
 const jaza = new Jaza({
   secretKey: process.env.JAZA_SECRET_KEY!,
-  publicKey: process.env.JAZA_PUBLIC_KEY!, // used when issuing client-facing sessions
+  publicKey: process.env.JAZA_PUBLIC_KEY!,
 });
 ```
 
-All privileged operations go through this client: `createCustomer`, `getBalance`, `topUp`, `consume`, `check`.
+<Warning>
+  Never embed the secret key in a mobile app, web frontend, or public repository.
+</Warning>
 
-## Mobile: publishable key + JWT
+## Top-up JWT
 
-`JazaProvider` takes `publishableKey`. The top-up sheet also needs a JWT from **your** backend:
+`jaza.topUp({ customerId })` returns a short-lived JWT. Your Expo app passes it to `JazaTopUpButton` via `onRequestToken`. The React Native SDK sends:
 
-```ts
-// Server
-const session = await jaza.topUp({ customerId });
-res.json({ token: session.token });
-```
+- `X-Jaza-Public-Key: <publishable key>`
+- `Authorization: Bearer <top-up JWT>`
 
-```tsx
-// App
-<JazaTopUpButton
-  onRequestToken={async () => {
-    const res = await fetch(`${API}/jaza/top-up-token`, { method: 'POST' });
-    return (await res.json()).token as string;
-  }}
-/>
-```
+## Environments
 
-Your BFF should authenticate the end user (session cookie, Bearer token, etc.) before calling `topUp`, so one user cannot mint tokens for another customer's wallet.
+Sandbox and live are isolated (keys, wallets, top-ups). Use test keys until the flow is solid, then switch to live keys from the dashboard.
 
-## Sandbox vs live keys
+## Next steps
 
-Use matching pairs. Do not mix `jz_test_sk_` with `jz_live_pk_`. The dashboard shows both environments; start with test keys until MoMo flows look correct, then switch to live.
-
-## Errors
-
-The Node SDK throws `JazaError` with `statusCode`, `code`, and `raw`. Handle insufficient balance and validation failures in your API responses so the app can show a clear message.
+- [Quickstart](/quickstart) · [Top up](/guides/top-up) · [Node SDK](/sdks/node)
