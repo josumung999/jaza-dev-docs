@@ -11,7 +11,7 @@ Jaza is **prepaid billing infrastructure** for African apps. You give every user
 
 <Columns cols={2}>
   <Card title="You ship" icon="code">
-    Feature costs and credit bundles in the [dashboard](https://jaza.dev/dashboard). Customers, sessions, and metering with `@jazadev/node`. Balance, top-up, ledger, and gates with `@jazadev/react-native`.
+    Feature costs and credit bundles in the [dashboard](https://jaza.dev/dashboard). Customers and metering with `@jazadev/node`. Balance and top-up UI with `@jazadev/react-native`.
   </Card>
   <Card title="Jaza handles" icon="building-columns">
     Mobile Money across supported African markets, FX into a unified credit model, payment rails (you do **not** set up PawaPay), and merchant **settlements**.
@@ -24,16 +24,15 @@ Jaza is **prepaid billing infrastructure** for African apps. You give every user
 
 ## How integration works
 
-1. **Dashboard** — create an app, enable countries, define features and bundles, copy sandbox keys.
-2. **Backend** — `@jazadev/node` with your **secret** key (`createCustomer`, `init`, `consume`; optional webhooks).
-3. **Mobile** — `@jazadev/react-native` with your **publishable** key and a client session from your host `init` route.
+1. **Dashboard** — create an app, enable markets, define features and bundles, copy sandbox keys.
+2. **Backend** — `@jazadev/node` with your **secret** key (`createCustomer`, `topUp`, `getBalance`, `consume`).
+3. **Mobile** — `@jazadev/react-native` with your **publishable** key plus a short-lived top-up JWT from your server.
 
 ```
 Expo app  →  your Node BFF  →  @jazadev/node (secret)
      │              │
-     └─ getSession ←── jaza.init() → sessionToken + snapshot
-     └─ JazaBalance / JazaTopUpButton / JazaActionButton / JazaLedger
-     └─ billable routes → jaza.consume() on the host
+     └─ publishable key + JWT ←── jaza.topUp()
+     └─ JazaBalanceWidget / JazaTopUpButton (MoMo sheet)
 ```
 
 ## Choose your stack
