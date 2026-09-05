@@ -1,7 +1,7 @@
 ---
 title: "Node.js SDK"
-description: "Official @jazadev/node SDK — create customers, top-up sessions, balances, and consume credits."
-keywords: ["@jazadev/node", "node", "sdk", "consume", "topUp"]
+description: "Official @jazadev/node SDK — create customers, client sessions, consume credits, and verify webhooks."
+keywords: ["@jazadev/node", "node", "sdk", "consume", "init", "webhooks"]
 ---
 
 Official backend SDK for Jaza prepaid / metered billing.
@@ -22,15 +22,19 @@ const jaza = new Jaza({
 });
 ```
 
+Constructor is `{ secretKey, publicKey }` — not `{ apiKey }`.
+
 ## Methods
 
 | Method | Description |
 |--------|-------------|
 | `createCustomer({ name, email?, phoneNumber? })` | Create customer; returns `cus_…` |
-| `topUp({ customerId })` | Top-up session + JWT `token` for the mobile SDK |
+| `init({ customerId })` | Client session JWT + wallet/features snapshot for the mobile SDK |
+| `consume({ customerId, featureCode \| credits, idempotencyKey })` | Debit wallet (server only) |
 | `getBalance({ customerId })` | Wallet including `balanceCredits` |
-| `consume({ customerId, featureCode \| credits, idempotencyKey })` | Debit wallet |
+| `topUp({ customerId })` | Top-up session + JWT (advanced / legacy BFF) |
 | `check({ topUpId })` | Top-up session status |
+| `webhooks.constructEvent(rawBody, signature, secret)` | Verify and parse merchant webhook payloads |
 
 Errors throw `JazaError` with `statusCode`, `code`, and `raw`.
 
@@ -44,19 +48,14 @@ const customer = await jaza.createCustomer({
 // store customer.id on your user
 ```
 
-## Issue a top-up token
+## Mint a client session
 
 ```ts
-const session = await jaza.topUp({ customerId: customer.id });
-// session.token → React Native JazaTopUpButton.onRequestToken
+const init = await jaza.init({ customerId: customer.id });
+// return init from POST /api/jaza/init → JazaProvider getSession
 ```
 
-## Read balance
-
-```ts
-const wallet = await jaza.getBalance({ customerId: customer.id });
-console.log(wallet.balanceCredits);
-```
+See [Handshake](/guides/handshake).
 
 ## Consume credits
 
@@ -80,13 +79,28 @@ await jaza.consume({
 });
 ```
 
-## Check top-up status
+## Webhooks
 
 ```ts
-const status = await jaza.check({ topUpId: session.id });
-console.log(status.status); // e.g. PENDING until deposits complete
+const event = jaza.webhooks.constructEvent(
+  rawBody,
+  req.headers['jaza-signature'],
+  process.env.JAZA_WEBHOOK_SECRET!,
+);
+```
+
+See [Webhooks](/guides/webhooks). Also exported: `constructEvent`, `WEBHOOK_EVENT_TYPES`.
+
+## Read balance / advanced top-up
+
+```ts
+const wallet = await jaza.getBalance({ customerId: customer.id });
+
+// Advanced: host-minted top-up JWT — prefer client session top-up in the RN SDK
+const session = await jaza.topUp({ customerId: customer.id });
+await jaza.check({ topUpId: session.id });
 ```
 
 ## Typical BFF shape
 
-See the [Quickstart](/quickstart) for `GET /jaza/balance` and `POST /jaza/top-up-token` examples wired to Expo.
+See the [Quickstart](/quickstart) for `POST /api/jaza/init` and billable `consume` routes wired to Expo.

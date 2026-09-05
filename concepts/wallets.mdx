@@ -8,13 +8,21 @@ Every Jaza customer owns a wallet for a given app and environment (sandbox or li
 
 ## One wallet per customer (per environment)
 
-Create customers with `@jazadev/node` (`createCustomer`). You get an id with a `cus_` prefix. Store that id on your user record and pass it to `getBalance`, `topUp`, and `consume`.
+Create customers with `@jazadev/node` (`createCustomer`). You get an id with a `cus_` prefix. Store that id on your user record and pass it to `init`, `consume`, and (if needed) `getBalance`.
+
+## How the app learns the balance
+
+1. Host calls `jaza.init({ customerId })` → snapshot includes `wallet.balanceCredits`
+2. `JazaProvider` loads that session via `getSession` / `authEndpoint`
+3. SDK refreshes via client wallet APIs while authenticated
+
+You do **not** need a host `getBalance` route for the primary UI path.
 
 ## Balance rules
 
-- Non-negative integer balance.
+- Non-negative balance.
 - Atomic deductions on `consume` (race-safe).
-- Top-ups and successful consumes reflect immediately for subsequent reads.
+- Top-ups and successful consumes reflect on subsequent reads and client refreshes.
 
 ## How balances change
 
@@ -27,9 +35,11 @@ Create customers with `@jazadev/node` (`createCustomer`). You get an id with a `
 
 Use the React Native SDK (not invented component names):
 
-- **`JazaBalanceWidget`** — shows balance via your `getBalance` callback.
-- **`JazaTopUpButton`** — opens the MoMo top-up sheet after your backend returns a JWT.
+- **`JazaBalance`** — shows credits from the session / client wallet (`JazaBalanceWidget` is a deprecated alias)
+- **`JazaTopUpButton`** — opens the MoMo sheet (session-minted top-up JWT)
+- **`JazaLedger`** — credit movements
+- **`JazaActionButton`** — gates taps by feature cost (never consumes)
 
 ## Next steps
 
-- [Ledger](/concepts/ledger) · [Top up](/guides/top-up) · [Consume credits](/guides/consume-credits)
+- [Handshake](/guides/handshake) · [Ledger](/concepts/ledger) · [Top-up](/guides/top-up) · [Consume credits](/guides/consume-credits)

@@ -1,0 +1,125 @@
+---
+title: "Merchant webhooks"
+description: "Register HTTPS endpoints, receive signed top-up and consumption events, and verify them with jaza.webhooks.constructEvent."
+sidebarTitle: "Webhooks"
+---
+
+Register one or more HTTPS endpoints in the dashboard under **App Settings → Webhooks**. Jaza POSTs JSON events with a Stripe-style `Jaza-Signature` header. Verify and parse with `@jazadev/node`.
+
+<Tip>
+  Prefer the SDKs for day-to-day balance UI. Use webhooks for your own server workflows (notifications, CRM, reconciliation).
+</Tip>
+
+## Dashboard setup
+
+1. Open your app → **App Settings** → **Webhooks**
+2. Add an endpoint URL (`https://…`)
+3. Choose events (Top-up and/or Consumption)
+4. Copy the signing secret once (`whsec_…`) — shown on create or rotate
+5. Enable or disable endpoints without deleting them
+
+Deliveries appear in the dashboard with status, attempts, payload, and **Retry**. Failed deliveries retry with exponential backoff, then move to dead-letter after the attempt limit.
+
+The legacy single `apps.webhookUrl` field is deprecated; use multi-endpoint webhooks instead.
+
+## Event catalog
+
+### Top-up
+
+| Type | When |
+| --- | --- |
+| `jaza.webhook.topUp.pending` | Payment request created |
+| `jaza.webhook.topUp.completed` | Credits credited |
+| `jaza.webhook.topUp.failed` | Payment failed |
+
+### Consumption
+
+| Type | When |
+| --- | --- |
+| `jaza.webhook.consumption.succeeded` | `consume` succeeded |
+| `jaza.webhook.consumption.insufficient_credits` | Debit blocked by balance |
+| `jaza.webhook.consumption.failed` | Other consume failure |
+
+Payload shape (conceptual):
+
+```json
+{
+  "id": "evt_…",
+  "type": "jaza.webhook.topUp.completed",
+  "created": 1710000000,
+  "data": { }
+}
+```
+
+## Signature
+
+Header:
+
+```text
+Jaza-Signature: t=<unix_seconds>,v1=<hmac_sha256_hex>
+```
+
+Signed string is `` `${t}.${rawBody}` `` with your endpoint secret.
+
+<Warning>
+  Verify against the **raw request body** string (or Buffer), not a re-serialized JSON object. Use a raw-body middleware in Express/Fastify/etc.
+</Warning>
+
+## Verify with Node
+
+```ts
+import { Jaza } from '@jazadev/node';
+import express from 'express';
+
+const jaza = new Jaza({
+  secretKey: process.env.JAZA_SECRET_KEY!,
+  publicKey: process.env.JAZA_PUBLIC_KEY!,
+});
+
+const app = express();
+
+app.post(
+  '/jaza/webhooks',
+  express.raw({ type: 'application/json' }),
+  (req, res) => {
+    const signature = req.header('Jaza-Signature') ?? '';
+    const secret = process.env.JAZA_WEBHOOK_SECRET!; // whsec_… from dashboard
+
+    let event;
+    try {
+      event = jaza.webhooks.constructEvent(req.body, signature, secret);
+    } catch {
+      return res.status(400).send('Invalid signature');
+    }
+
+    switch (event.type) {
+      case 'jaza.webhook.topUp.completed':
+        // notify user, sync CRM, …
+        break;
+      case 'jaza.webhook.consumption.succeeded':
+        break;
+      default:
+        break;
+    }
+
+    res.json({ received: true });
+  },
+);
+```
+
+`constructEvent` checks the timestamp tolerance (default 5 minutes) and returns a typed `{ id, type, created, data }` object, or throws `JazaError`.
+
+You can also import `constructEvent` / `WEBHOOK_EVENT_TYPES` from `@jazadev/node` directly.
+
+## Operational tips
+
+- Return **2xx** quickly; do heavy work async
+- Idempotent handlers: key off `event.id`
+- Rotate secrets in the dashboard when leaked; update your env var
+- Sandbox (`jz_test_*`) and live (`jz_live_*`) apps are isolated — register endpoints per environment as needed
+
+## Related
+
+- [Dashboard setup](/guides/dashboard-setup)
+- [Node SDK](/sdks/node)
+- [Webhooks concept](/concepts/webhooks)

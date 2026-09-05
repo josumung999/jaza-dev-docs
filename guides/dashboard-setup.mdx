@@ -1,8 +1,8 @@
 ---
 title: "Dashboard setup"
-description: "Create an app, enable markets, define features and bundles, and copy sandbox keys — all in the Jaza dashboard."
+description: "Create an app, enable countries, define features and bundles, copy keys, and configure webhooks."
 sidebarTitle: "Dashboard setup"
-keywords: ["dashboard", "features", "bundles", "markets", "api keys"]
+keywords: ["dashboard", "features", "bundles", "markets", "api keys", "webhooks"]
 ---
 
 Pricing and markets live in the [dashboard](https://jaza.dev/dashboard), not in a separate rate-card API. Configure once, then enforce costs with `jaza.consume({ featureCode })` and sell packs through the React Native top-up sheet.
@@ -13,9 +13,9 @@ Pricing and markets live in the [dashboard](https://jaza.dev/dashboard), not in 
 2. Create an app and pick a clear name.
 3. Stay in **sandbox** until the flow works end to end.
 
-## 2. Enable markets
+## 2. Enable countries
 
-Under **App settings**, enable the Mobile Money countries you need. Jaza routes deposits through its partners — you do **not** open a PawaPay account or manage multi-currency settlement yourself.
+Under **App Settings → Countries**, enable the Mobile Money markets you need. Jaza routes deposits through its partners — you do **not** open a PawaPay account or manage multi-currency settlement yourself.
 
 ## 3. Define features
 
@@ -26,11 +26,11 @@ Under **Features**, add each billable action:
 | Feature code | `SEND_MESSAGE` |
 | Credits cost | `5` |
 
-Your backend will pass the same `featureCode` to `jaza.consume()`.
+Your backend will pass the same `featureCode` to `jaza.consume()`. Costs also appear in the client session snapshot for `JazaActionButton`.
 
 ## 4. Define bundles
 
-Under **Bundles**, add credit packs shown in the top-up sheet (label, local price, credits granted).
+Under **Bundles**, add credit packs shown in the top-up sheet (label, price, credits granted).
 
 ## 5. Copy API keys
 
@@ -43,10 +43,12 @@ Under **Bundles**, add credit packs shown in the top-up sheet (label, local pric
   Never ship the secret key in a mobile binary or public repo.
 </Warning>
 
-## Optional: webhook URL
+## 6. Webhooks (optional)
 
-You can set an HTTPS `webhookUrl` on the app for outbound notifications as event delivery expands. Prefer refreshing balance from the mobile SDK (`onTopUpComplete` + `getBalance`) for top-up UX today. See [Webhooks](/concepts/webhooks).
+Under **App Settings → Webhooks**, add HTTPS endpoints, pick top-up and consumption events, and copy the signing secret. Verify with `jaza.webhooks.constructEvent`. See [Webhooks](/guides/webhooks).
+
+For in-app UX after a top-up, use `onTopUpComplete` and the SDK wallet refresh — you do not need webhooks for the sheet to update balance.
 
 ## Next steps
 
-- [Quickstart](/quickstart) · [Top up](/guides/top-up) · [Consume credits](/guides/consume-credits)
+- [Quickstart](/quickstart) · [Handshake](/guides/handshake) · [Top-up](/guides/top-up) · [Consume credits](/guides/consume-credits)

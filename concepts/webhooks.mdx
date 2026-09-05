@@ -1,21 +1,26 @@
 ---
 title: "Webhooks"
-description: "Configure an HTTPS webhook URL on your app for outbound notifications as Jaza expands event delivery."
+description: "Outbound signed events for top-ups and consumption — configure endpoints in the dashboard."
 sidebarTitle: "Webhooks"
 ---
 
-Each app can store an HTTPS **webhook URL** in the dashboard (app settings / API). Use this so Jaza can notify your backend about payment and credit events as outbound delivery matures.
+Each app can register **multiple HTTPS webhook endpoints** (URL, signing secret, enabled events, status) under **App Settings → Webhooks**.
 
-## Today
+## What you get
 
-- Set or clear `webhookUrl` from the [dashboard](https://jaza.dev/dashboard) (or apps API).
-- Top-up completion is also reflected when the React Native SDK finishes the sheet and your app refreshes balance via `getBalance`.
-- Provider webhooks (for example PawaPay → Jaza) are handled **inside** Jaza — you do not implement aggregator webhooks.
+- Signed POSTs with `Jaza-Signature`
+- Top-up and consumption event types
+- Dashboard delivery history, retries, and dead-letter visibility
+- Verification via `jaza.webhooks.constructEvent` in `@jazadev/node`
 
-## Guidance
+Provider webhooks (for example PawaPay → Jaza) stay **inside** Jaza — you do not implement aggregator callbacks.
 
-Prefer refreshing balance and UX from the mobile SDK callbacks (`onTopUpComplete`) plus your BFF. Treat outbound merchant webhooks as complementary, and verify any signature scheme documented in the dashboard when events are enabled for your account.
+## Prefer the full guide
+
+See **[Merchant webhooks](/guides/webhooks)** for setup, event catalog, signature verification, and Node samples.
+
+For in-app balance after checkout, use the React Native sheet + `onTopUpComplete` / client wallet refresh. Treat merchant webhooks as complementary server automation.
 
 ## Next steps
 
-- [Top up](/guides/top-up) · [Authentication](/guides/authentication)
+- [Webhooks guide](/guides/webhooks) · [Dashboard setup](/guides/dashboard-setup) · [Node SDK](/sdks/node)

@@ -1,10 +1,10 @@
 ---
 title: "Authentication"
-description: "Secret keys on the server, publishable keys in the app, and short-lived top-up JWTs."
+description: "Secret keys on the server, publishable keys in the app, and client session JWTs from jaza.init."
 sidebarTitle: "Authentication"
 ---
 
-Jaza uses two long-lived keys plus a short-lived top-up token.
+Jaza uses two long-lived keys plus a short-lived **client session** from your host handshake. Top-up JWTs are minted by the React Native SDK from that session — you do not pass them through `onRequestToken` on the happy path.
 
 ## Keys
 
@@ -26,17 +26,31 @@ const jaza = new Jaza({
   Never embed the secret key in a mobile app, web frontend, or public repository.
 </Warning>
 
-## Top-up JWT
+## Client session JWT
 
-`jaza.topUp({ customerId })` returns a short-lived JWT. Your Expo app passes it to `JazaTopUpButton` via `onRequestToken`. The React Native SDK sends:
+`jaza.init({ customerId })` returns an `InitResult` with `sessionToken`. Your Expo app loads it via `JazaProvider` `getSession` (or `authEndpoint`). The React Native SDK then calls Jaza **client** routes with:
 
 - `X-Jaza-Public-Key: <publishable key>`
-- `Authorization: Bearer <top-up JWT>`
+- `Authorization: Bearer <session JWT>`
+
+See [Handshake](/guides/handshake).
+
+## Top-up JWT (internal)
+
+After a session exists, the SDK mints a short-lived top-up JWT via `POST /v1/client/top-ups` when the user opens checkout. Apps do **not** implement `onRequestToken` for the primary flow.
+
+### Advanced / legacy
+
+`jaza.topUp({ customerId })` on the Node SDK still returns a host-minted top-up JWT for older integrations. Prefer the client-session path above.
+
+## Webhook secrets
+
+Endpoint signing secrets (`whsec_…`) are separate from API keys. Store them only on the server and verify with `jaza.webhooks.constructEvent`. See [Webhooks](/guides/webhooks).
 
 ## Environments
 
-Sandbox and live are isolated (keys, wallets, top-ups). Use test keys until the flow is solid, then switch to live keys from the dashboard.
+Sandbox and live are isolated (keys, wallets, top-ups, webhooks). Use test keys until the flow is solid, then switch to live keys from the dashboard.
 
 ## Next steps
 
-- [Quickstart](/quickstart) · [Top up](/guides/top-up) · [Node SDK](/sdks/node)
+- [Quickstart](/quickstart) · [Handshake](/guides/handshake) · [Top-up](/guides/top-up) · [Node SDK](/sdks/node)
