@@ -34,6 +34,8 @@ In the dashboard:
   Never ship the secret key in a mobile binary or public repo.
 </Warning>
 
+When you switch from sandbox to live keys, create a **new** `customerId` under live and overwrite it in your user database — test wallets do not carry over. See [Authentication → Going live](/guides/authentication#going-live-remint-customerid).
+
 ## 2. Install the Node SDK
 
 ```bash

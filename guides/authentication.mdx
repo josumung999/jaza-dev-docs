@@ -49,7 +49,50 @@ Endpoint signing secrets (`whsec_…`) are separate from API keys. Store them on
 
 ## Environments
 
-Sandbox and live are isolated (keys, wallets, top-ups, webhooks). Use test keys until the flow is solid, then switch to live keys from the dashboard.
+Sandbox and live are isolated (keys, wallets, top-ups, webhooks, **customers**). Use test keys until the flow is solid, then switch to live keys from the dashboard.
+
+### Going live: remint `customerId`
+
+A `cus_…` created with `jz_test_*` keys does **not** exist under `jz_live_*`. `jaza.init` / `getCustomer` return **404 Customer not found**. Balances and ledger do not carry over.
+
+Your host app owns the mapping. Typical pattern when a stored id is missing in the current environment:
+
+1. Detect `404` on `getCustomer` / `init` (or compare stored env vs current key prefix).
+2. Call `createCustomer` with the same email/phone against the **live** secret key.
+3. **Overwrite** the user's `customerId` in your database.
+4. Call `jaza.init` with the new id.
+
+```ts
+import { Jaza, JazaError } from '@jazadev/node';
+
+async function ensureLiveCustomer(user: {
+  id: string;
+  email: string;
+  phone?: string;
+  jazaCustomerId?: string;
+}) {
+  try {
+    if (user.jazaCustomerId) {
+      await jaza.getCustomer(user.jazaCustomerId);
+      return user.jazaCustomerId;
+    }
+  } catch (err) {
+    if (!(err instanceof JazaError) || err.statusCode !== 404) throw err;
+  }
+
+  const customer = await jaza.createCustomer({
+    name: user.email.split('@')[0] ?? 'User',
+    email: user.email,
+    phoneNumber: user.phone,
+  });
+  await db.users.update(user.id, { jazaCustomerId: customer.id });
+  return customer.id;
+}
+```
+
+The React Native example app demonstrates this remint on sign-in when you switch `JAZA_SECRET_KEY` / publishable keys between sandbox and live.
+
+On the client, handle handshake failure via `onAuthError(error)` and show `authError` from `useJaza()`. Navigate away before clearing session so screens that call `useJaza` are not left outside `JazaProvider`.
 
 ## Next steps
 
