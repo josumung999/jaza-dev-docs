@@ -11,7 +11,7 @@ Jaza is **prepaid billing infrastructure** for African apps. You give every user
 
 <Columns cols={2}>
   <Card title="You ship" icon="code">
-    Feature costs and credit bundles in the [dashboard](https://jaza.dev/dashboard). Customers and metering with `@jazadev/node`. Balance and top-up UI with `@jazadev/react-native`.
+    Feature costs and credit bundles in the [dashboard](https://jaza.dev/dashboard). Customers and metering with `@jazadev/node`. Balance and top-up UI with `@jazadev/react-native` (Expo) or `@jazadev/react` (web).
   </Card>
   <Card title="Jaza handles" icon="building-columns">
     Mobile Money across supported African markets, FX into a unified credit model, payment rails (you do **not** set up PawaPay), and merchant **settlements**.
@@ -25,24 +25,24 @@ Jaza is **prepaid billing infrastructure** for African apps. You give every user
 ## How integration works
 
 1. **Dashboard** — create an app, enable markets, define features and bundles, copy sandbox keys.
-2. **Backend** — `@jazadev/node` with your **secret** key (`createCustomer`, `topUp`, `getBalance`, `consume`).
-3. **Mobile** — `@jazadev/react-native` with your **publishable** key plus a short-lived top-up JWT from your server.
+2. **Backend** — `@jazadev/node` with your **secret** key (`createCustomer`, `init`, `getBalance`, `consume`).
+3. **Client** — `@jazadev/react-native` or `@jazadev/react` with your **publishable** key and a client session from `jaza.init`.
 
 ```
-Expo app  →  your Node BFF  →  @jazadev/node (secret)
-     │              │
-     └─ publishable key + JWT ←── jaza.topUp()
-     └─ JazaBalanceWidget / JazaTopUpButton (MoMo sheet)
+App (Expo or React web)  →  your Node BFF  →  @jazadev/node (secret)
+     │                            │
+     └─ publishable key + session ←── jaza.init({ customerId })
+     └─ JazaBalance / JazaTopUpButton (MoMo checkout)
 ```
 
 ## Choose your stack
 
 <CardGroup cols={2}>
   <Card title="Expo + Node" icon="mobile" href="/quickstart">
-    Official path today. End-to-end quickstart with both SDKs.
+    Official mobile path. End-to-end quickstart with both SDKs.
   </Card>
-  <Card title="React Web + Node" icon="globe">
-    Coming soon. Use Expo + Node for client billing UI today.
+  <Card title="React Web + Node" icon="globe" href="/sdks/react">
+    Official web path (`@jazadev/react`) for Next.js, Remix, Vite, and more.
   </Card>
   <Card title="Flutter + Node" icon="mobile">
     Coming soon. Server metering still works with `@jazadev/node`.

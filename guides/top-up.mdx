@@ -8,7 +8,9 @@ keywords: ["top-up", "mobile money", "session", "JazaTopUpButton"]
 Top-up uses **both** SDKs on the primary path:
 
 1. **Backend** — `@jazadev/node` mints a **client session** with `jaza.init` (host handshake).
-2. **Mobile** — `@jazadev/react-native` opens the MoMo sheet; the SDK mints the top-up JWT from that session.
+2. **Client** — `@jazadev/react-native` or `@jazadev/react` opens MoMo checkout; the SDK mints the top-up JWT from that session.
+
+On **web**, checkout is a responsive drawer (bottom on mobile, right on desktop). On **Expo**, it is a bottom sheet.
 
 ```
 App → your BFF → jaza.init({ customerId }) → InitResult
@@ -110,4 +112,4 @@ Subscribe to `jaza.webhook.topUp.completed` (and related events) for server-side
 
 ## Next steps
 
-- [Gating actions](/guides/gating-actions) · [Consume credits](/guides/consume-credits) · [React Native SDK](/sdks/react-native) · [Node SDK](/sdks/node)
+- [Gating actions](/guides/gating-actions) · [Consume credits](/guides/consume-credits) · [React Native SDK](/sdks/react-native) · [React web SDK](/sdks/react) · [Node SDK](/sdks/node)

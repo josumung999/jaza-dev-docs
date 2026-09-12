@@ -19,7 +19,7 @@ Attach `docs.jaza.dev` in the [Mintlify dashboard](https://dashboard.mintlify.co
 
 ## Content rules
 
-See [AGENTS.md](./AGENTS.md). Docs are **SDK-first** (`@jazadev/node` + `@jazadev/react-native`). Do not document raw REST as the primary integration path. Jaza handles Mobile Money (PawaPay markets) and merchant settlements — developers do not set up aggregators.
+See [AGENTS.md](./AGENTS.md). Docs are **SDK-first** (`@jazadev/node`, `@jazadev/react-native`, `@jazadev/react`). Do not document raw REST as the primary integration path. Jaza handles Mobile Money (PawaPay markets) and merchant settlements — developers do not set up aggregators.
 
 ## License
 

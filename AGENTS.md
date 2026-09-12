@@ -9,13 +9,13 @@
 ## Product facts (do not contradict)
 
 - Jaza = prepaid billing for African apps (credit wallets, MoMo top-ups, feature metering)
-- Developers use `@jazadev/node` (secret key, server) and `@jazadev/react-native` (publishable key + client session)
+- Developers use `@jazadev/node` (secret key, server) and either `@jazadev/react-native` (Expo) or `@jazadev/react` (web) with a publishable key + client session
 - Node constructor is `{ secretKey, publicKey }` — **not** `{ apiKey }`
 - Host handshake is `jaza.init({ customerId })` → `InitResult` for `JazaProvider` `getSession` / `authEndpoint`
 - Consume uses `featureCode` (or `credits`) + `idempotencyKey` — **not** `feature` / rate-card APIs
-- Mobile UI: `JazaBalance`, `JazaTopUpButton`, `JazaLedger`, `JazaActionButton` — **not** invented names (`TopUpModal`, `FuelBalance`, etc.)
+- Client UI: `JazaBalance`, `JazaTopUpButton`, `JazaLedger`, `JazaActionButton` — **not** invented names (`TopUpModal`, `FuelBalance`, etc.)
 - `JazaBalanceWidget` is a **deprecated alias** of `JazaBalance`
-- Top-up JWT is minted by the RN SDK from the client session — **not** host `onRequestToken` as the primary path
+- Top-up JWT is minted by the client SDK from the client session — **not** host `onRequestToken` as the primary path
 - Merchant webhooks: dashboard multi-endpoint + `jaza.webhooks.constructEvent(rawBody, signature, secret)`
 - Paywall-insufficient client realtime is SDK-internal (`WS /v1/client/realtime`); do not invent a merchant SSE guide
 - **Jaza handles** Mobile Money collection (PawaPay African markets and related rails), FX into credits/USD, and **merchant settlements**
@@ -44,7 +44,7 @@
 - Fake rate-card HTTP APIs (`jaza.rateCards.*`)
 - `onRequestToken` / host-minted top-up JWT as the **default** top-up path (legacy/advanced only)
 - Instructing merchants to create PawaPay accounts
-- Invented packages (`@jazadev/react` web) or stacks not marked Coming soon
+- Invented packages or stacks not marked Coming soon (official clients: `@jazadev/node`, `@jazadev/react-native`, `@jazadev/react`)
 - OpenAPI playground as the primary integration path in v1
 
 ## Style preferences
@@ -54,16 +54,16 @@
 - Bold for UI: Click **API keys**
 - Code for packages, env vars, methods
 - SDK code samples over curl
-- Keep examples aligned with package READMEs in `packages/@jaza-node` and `packages/@jaza-react-native`
+- Keep examples aligned with package READMEs in `packages/@jaza-node`, `packages/@jaza-react-native`, and `packages/@jaza-react`
 - Prefer editing existing pages over inventing new guide titles
 
 ## Content boundaries
 
-- **Do** document Expo + Node quickstart, handshake, gating actions, top-up, consume, webhooks, concepts, auth, dashboard setup, SDK references
+- **Do** document Expo + Node and React web + Node, handshake, gating actions, top-up, consume, webhooks, concepts, auth, dashboard setup, SDK references
 - **Do** document `jaza.webhooks.constructEvent` (it exists on `@jazadev/node`)
 - **Do not** add an API Reference / OpenAPI playground as primary nav in v1
 - **Do not** invent REST endpoints or packages that do not exist
 - **Do not** instruct merchants to create PawaPay accounts
 - **Do not** invent unsupported client stacks (mark as Coming soon)
-- **Do not** write top-up guides that only show one SDK
+- **Do not** write top-up guides that only show one SDK when both web and mobile apply
 - Link dashboard to https://jaza.dev/dashboard and product to https://jaza.dev

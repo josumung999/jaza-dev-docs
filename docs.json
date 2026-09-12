@@ -46,7 +46,7 @@
           },
           {
             "group": "SDKs",
-            "pages": ["sdks/node", "sdks/react-native"]
+            "pages": ["sdks/node", "sdks/react-native", "sdks/react"]
           },
           {
             "group": "Reference",
