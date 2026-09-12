@@ -1,7 +1,8 @@
 ---
-title: "Merchant webhooks"
-description: "Register HTTPS endpoints, receive signed top-up and consumption events, and verify them with jaza.webhooks.constructEvent."
+title: "Merchant webhooks — verify with constructEvent"
 sidebarTitle: "Webhooks"
+description: "Register HTTPS endpoints, receive signed top-up and consumption events, and verify them with jaza.webhooks.constructEvent."
+keywords: ["merchant webhooks", "constructEvent", "webhook signature", "jaza.webhooks"]
 ---
 
 Register one or more HTTPS endpoints in the dashboard under **App Settings → Webhooks**. Jaza POSTs JSON events with a Stripe-style `Jaza-Signature` header. Verify and parse with `@jazadev/node`.

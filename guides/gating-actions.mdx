@@ -1,7 +1,8 @@
 ---
-title: "Gating billable actions"
-description: "Use JazaActionButton to block taps when balance is low, then enforce jaza.consume on your backend."
+title: "Gating billable actions with JazaActionButton"
 sidebarTitle: "Gating actions"
+description: "Use JazaActionButton to block taps when balance is low, then enforce jaza.consume on your backend for every billable action."
+keywords: ["JazaActionButton", "paywall", "gating", "insufficient balance", "consume"]
 ---
 
 `JazaActionButton` answers one UX question: **does this wallet have enough credits for `featureCode`?** It never debits the wallet. Your host must call `jaza.consume` after a successful gate.

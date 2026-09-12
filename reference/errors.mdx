@@ -1,7 +1,8 @@
 ---
-title: "Errors"
-description: "How JazaError surfaces from the Node SDK, common codes, consume validation, and safe retry guidance."
+title: "Errors — JazaError codes and retry guidance"
 sidebarTitle: "Errors"
+description: "How JazaError surfaces from the Node SDK, common error codes, consume validation failures, and safe retry guidance for prepaid flows."
+keywords: ["JazaError", "error codes", "retry", "insufficient credits", "validation"]
 ---
 
 `@jazadev/node` throws `JazaError` with `statusCode`, `code`, and `raw` when the API rejects a call. Switch on `code` / `statusCode` in your BFF; do not parse human messages as the primary control flow.

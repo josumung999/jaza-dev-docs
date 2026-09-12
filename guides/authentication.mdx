@@ -1,7 +1,8 @@
 ---
-title: "Authentication"
-description: "Secret keys on the server, publishable keys in the app, and client session JWTs from jaza.init."
+title: "Authentication — secret, publishable, and client session keys"
 sidebarTitle: "Authentication"
+description: "Use secret keys on the server, publishable keys in the app, and client session JWTs from jaza.init for secure prepaid billing."
+keywords: ["jaza authentication", "secret key", "publishable key", "client session", "jwt"]
 ---
 
 Jaza uses two long-lived keys plus a short-lived **client session** from your host handshake. Top-up JWTs are minted by the client SDK from that session — you do not pass them through `onRequestToken` on the happy path.

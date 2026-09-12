@@ -2,13 +2,36 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "Jaza Docs",
-  "description": "Prepaid billing SDKs for African apps — credit wallets, Mobile Money top-ups, and settlements handled by Jaza.",
+  "description": "Prepaid billing infrastructure for African apps — credit wallets, Mobile Money top-ups, FX, and USD settlements handled by Jaza.",
   "colors": {
     "primary": "#2DD4BF",
     "light": "#5EEAD4",
     "dark": "#0D9488"
   },
   "favicon": "/favicon.svg",
+  "seo": {
+    "indexing": "navigable",
+    "metatags": {
+      "canonical": "https://docs.jaza.dev",
+      "robots": "index, follow",
+      "og:site_name": "Jaza Docs",
+      "og:locale": "en_US",
+      "twitter:card": "summary_large_image",
+      "twitter:site": "@jazadev"
+    },
+    "organization": {
+      "id": "https://jaza.dev/#organization",
+      "name": "Jaza",
+      "legalName": "Polele SAS",
+      "url": "https://jaza.dev",
+      "logo": "https://docs.jaza.dev/logo/dark.svg",
+      "sameAs": [
+        "https://x.com/jazadev",
+        "https://linkedin.com/company/jaza",
+        "https://github.com/josumung999/jaza-packages"
+      ]
+    }
+  },
   "redirects": [
     {
       "source": "/concepts/features-and-bundles",

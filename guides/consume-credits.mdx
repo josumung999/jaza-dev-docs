@@ -1,8 +1,8 @@
 ---
-title: "Consume credits"
-description: "Debit a wallet with jaza.consume() using featureCode, optional credits override, and an idempotency key — always on your backend."
+title: "Consume credits — featureCode and optional override"
 sidebarTitle: "Consume credits"
-keywords: ["consume", "featureCode", "idempotency", "metering"]
+description: "Debit a wallet with jaza.consume() using featureCode, an optional credits override, and an idempotency key — always on your backend."
+keywords: ["jaza.consume", "featureCode", "credits override", "idempotency", "metering"]
 ---
 
 Call `jaza.consume()` from your **backend** after a billable action. Pass a dashboard `featureCode`, raw `credits`, or both — plus an **idempotency key** so retries never double-charge.
