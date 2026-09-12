@@ -1,15 +1,36 @@
 ---
 title: "Settlements — USD payouts from Mobile Money"
 sidebarTitle: "Settlements"
-description: "Jaza collects Mobile Money across African markets, converts to USD, and settles to your bank when you reach the $100 threshold."
-keywords: ["jaza settlements", "usd payout", "mobile money", "fx", "merchant payout"]
+description: "Jaza collects Mobile Money across African markets, converts to USD, takes a 5% platform fee, and settles to your bank at the $100 threshold."
+keywords: ["jaza settlements", "usd payout", "mobile money", "fx", "merchant payout", "5% fee"]
 ---
 
 When users top up, Jaza:
 
 1. **Collects** local currency via Mobile Money across supported African markets (and card where enabled).
-2. **Converts** into your unified credit model and USD settlement balance at correct FX rates.
-3. **Settles** to your bank when your available settlement balance reaches the **$100 USD** threshold.
+2. **Converts** into your unified credit model using customer FX rates (local units per USD).
+3. **Accrues** USD to your settlement wallet after a **5% platform fee** on each top-up.
+4. **Settles** to your bank when you request a payout or on your chosen schedule, with a **$100 USD** minimum.
+
+## Platform fee
+
+Jaza takes **5% of each top-up** from the merchant share. End users still pay the bundle price in local currency — the fee is not added on top of their MoMo charge.
+
+Example: a **$10** bundle top-up credits **$9.50** to your settlement wallet.
+
+## FX
+
+Customer quotes use a **customer-pays** local-per-USD rate (the rate to buy $1 with local currency). A tighter treasury rate is kept for ops and margin; it is not charged to the end user.
+
+## Bank account and frequency
+
+In the dashboard **Payouts** page:
+
+- Save one bank account (holder name, account number, bank, SWIFT/BIC, branch address, country, currency).
+- Choose a settlement frequency: weekly, bi-weekly, monthly, or quarterly.
+- Request a settlement anytime when available balance is at least **$100 USD**.
+
+After each completed settlement, Jaza emails an invoice PDF. Funds typically arrive in **2–5 business days**.
 
 ## What you do not do
 
@@ -21,7 +42,7 @@ When users top up, Jaza:
 
 - Enable markets, features, and bundles in the dashboard.
 - Integrate `@jazadev/node` plus `@jazadev/react-native` or `@jazadev/react`.
-- Use dashboard analytics and payouts for business reporting.
+- Configure bank details and settlement frequency; use dashboard analytics and payouts for reporting.
 
 ## Sandbox vs live
 

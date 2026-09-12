@@ -22,7 +22,7 @@
 - Top-up JWT is minted by the client SDK from the client session — **not** host `onRequestToken` as the primary path
 - Merchant webhooks: dashboard multi-endpoint + `jaza.webhooks.constructEvent(rawBody, signature, secret)`
 - Paywall-insufficient client realtime is SDK-internal (`WS /v1/client/realtime`); do not invent a merchant SSE guide
-- **Jaza handles** Mobile Money collection, FX into credits/USD, and **merchant settlements** (bank payout when **$100** USD threshold is reached)
+- **Jaza handles** Mobile Money collection, FX into credits/USD (customer-pays local-per-USD rates), a **5% platform fee** on each top-up, and **merchant settlements** (bank payout from **$100** USD, on request or scheduled frequency)
 - Developers **do not** set up PawaPay or other aggregators, manage multi-currency settlement, or treat the REST API as the primary integration path
 - Sandbox (`jz_test_*`) vs live (`jz_live_*`) keys and data are isolated
 - Features and bundles are separate concepts (dashboard); not via a “rate card” HTTP API
