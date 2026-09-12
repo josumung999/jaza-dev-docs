@@ -4,16 +4,16 @@ description: "Every credit movement is recorded so balances stay auditable and t
 sidebarTitle: "Ledger"
 ---
 
-Jaza records credit movements so you can trust balances and reconcile activity. Top-ups and consumes produce ledger history you can inspect in the dashboard (credit activity).
+Jaza records every credit movement in an **append-only ledger**. Top-ups and consumes produce history you can inspect in the dashboard and surface in your app with `JazaLedger`.
 
 ## What gets recorded
-
-Typical movements include:
 
 | Kind | Description |
 | --- | --- |
 | Top-up / credit | Credits added after a successful payment |
 | Consume / debit | Credits deducted for a feature or amount |
+
+When you call `consume` with a `featureCode`, the ledger entry stores that code in metadata — even if you also pass `credits` to override the debit amount. That keeps analytics and activity attributable to the right feature.
 
 Each consume should carry an **idempotency key** from your backend so retries do not double-charge.
 

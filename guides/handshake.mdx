@@ -4,7 +4,7 @@ description: "Map your signed-in user to a Jaza customer, mint a client session 
 sidebarTitle: "Handshake"
 ---
 
-The handshake is the only host route the mobile SDK needs for balance, ledger, and top-up. Debits still use a separate host route with `jaza.consume`.
+The handshake is the only host route the client SDK needs for balance, ledger, and top-up. Debits still use a separate host route with `jaza.consume`.
 
 ## Flow
 
@@ -14,12 +14,20 @@ The handshake is the only host route the mobile SDK needs for balance, ledger, a
 4. Host returns `InitResult` (`sessionToken`, wallet/features snapshot, expiry)
 5. `JazaProvider` stores the session and calls Jaza **client** APIs with the session JWT + publishable key
 
-```
-Expo app  →  POST /api/jaza/init (your auth)
-               ↓
-            jaza.init({ customerId })  →  POST /v1/client/sessions
-               ↓
-            InitResult → JazaProvider (getSession)
+```mermaid
+sequenceDiagram
+  participant App as Your app
+  participant BFF as Your BFF
+  participant Node as @jazadev/node
+  participant API as Jaza API
+
+  App->>BFF: POST /api/jaza/init (your auth)
+  BFF->>Node: jaza.init({ customerId })
+  Node->>API: POST /v1/client/sessions
+  API-->>Node: sessionToken + snapshot
+  Node-->>BFF: InitResult
+  BFF-->>App: InitResult
+  Note over App: JazaProvider getSession
 ```
 
 <Warning>
@@ -28,22 +36,26 @@ Expo app  →  POST /api/jaza/init (your auth)
 
 ## Host route
 
-```ts
-import { jaza } from './jaza'; // new Jaza({ secretKey, publicKey })
+<Tabs>
+  <Tab title="Node">
+    ```ts
+    import { jaza } from './jaza'; // new Jaza({ secretKey, publicKey })
 
-// POST /api/jaza/init — require your app session first
-app.post('/api/jaza/init', async (req, res) => {
-  if (!req.user?.jazaCustomerId) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
+    // POST /api/jaza/init — require your app session first
+    app.post('/api/jaza/init', async (req, res) => {
+      if (!req.user?.jazaCustomerId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
 
-  const result = await jaza.init({
-    customerId: req.user.jazaCustomerId,
-  });
+      const result = await jaza.init({
+        customerId: req.user.jazaCustomerId,
+      });
 
-  res.json(result);
-});
-```
+      res.json(result);
+    });
+    ```
+  </Tab>
+</Tabs>
 
 `InitResult` includes at least:
 
@@ -62,33 +74,48 @@ Create the customer once at signup with `jaza.createCustomer`, then store `custo
 
 Prefer **`getSession`**: a function that hits your init route and returns `InitResult`.
 
-```tsx
-<JazaProvider
-  publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
-  getSession={async () => {
-    const res = await fetch(`${API_BASE}/api/jaza/init`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-    if (!res.ok) throw new Error('Jaza init failed');
-    return (await res.json()) as InitResult;
-  }}
-  onAuthError={() => {
-    // re-login or clear local session
-  }}
-/>
-```
+<Tabs>
+  <Tab title="React Native">
+    ```tsx
+    <JazaProvider
+      publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
+      getSession={async () => {
+        const res = await fetch(`${API_BASE}/api/jaza/init`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error('Jaza init failed');
+        return (await res.json()) as InitResult;
+      }}
+      onAuthError={() => {
+        // re-login or clear local session
+      }}
+    />
+    ```
+  </Tab>
+  <Tab title="React">
+    ```tsx
+    <JazaProvider
+      publishableKey={process.env.NEXT_PUBLIC_JAZA_PUBLISHABLE_KEY!}
+      getSession={async () => {
+        const res = await fetch('/api/jaza/init', {
+          method: 'POST',
+          credentials: 'include',
+        });
+        if (!res.ok) throw new Error('Jaza init failed');
+        return (await res.json()) as InitResult;
+      }}
+      onAuthError={() => {
+        // re-login or clear local session
+      }}
+    />
+    ```
+  </Tab>
+</Tabs>
 
 ### `authEndpoint` alternative
 
 Pass a URL instead of a function. The SDK `POST`s that endpoint and expects the same `InitResult` JSON. If both are set, **`getSession` wins**.
-
-```tsx
-<JazaProvider
-  publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
-  authEndpoint={`${API_BASE}/api/jaza/init`}
-/>
-```
 
 ### Legacy `getBalance`
 

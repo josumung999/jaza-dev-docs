@@ -1,0 +1,26 @@
+---
+title: "Bundles"
+description: "Credit packs users buy in the top-up UI — configured in the dashboard."
+sidebarTitle: "Bundles"
+---
+
+A **bundle** is a credit pack (label, price, credits) shown in the client top-up UI. Configure bundles under **Bundles** in the [dashboard](https://jaza.dev/dashboard).
+
+## What users see
+
+When someone taps `JazaTopUpButton`, the SDK loads active bundles for your app and environment and presents them for Mobile Money checkout. You do not build a custom pack catalog unless you want to — the default UI is enough for most apps.
+
+## Markets
+
+Enable Mobile Money countries under **App Settings**. Jaza routes deposits through its partners across supported African markets — you do not open a PawaPay account.
+
+## Features vs bundles
+
+| Concept | Purpose |
+| --- | --- |
+| [Features](/concepts/features) | What actions **cost** when you call `consume` |
+| Bundles | What users **buy** when they top up |
+
+## Next steps
+
+- [Top up](/guides/top-up) · [Credits](/concepts/credits) · [Dashboard setup](/guides/dashboard-setup)

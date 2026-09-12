@@ -6,6 +6,8 @@ sidebarTitle: "Webhooks"
 
 Register one or more HTTPS endpoints in the dashboard under **App Settings → Webhooks**. Jaza POSTs JSON events with a Stripe-style `Jaza-Signature` header. Verify and parse with `@jazadev/node`.
 
+Use webhooks for **real-time insights** — unlock access after top-up, sync your CRM, or react to failed consumption — without polling.
+
 <Tip>
   Prefer the SDKs for day-to-day balance UI. Use webhooks for your own server workflows (notifications, CRM, reconciliation).
 </Tip>
@@ -67,45 +69,49 @@ Signed string is `` `${t}.${rawBody}` `` with your endpoint secret.
 
 ## Verify with Node
 
-```ts
-import { Jaza } from '@jazadev/node';
-import express from 'express';
+<Tabs>
+  <Tab title="Node">
+    ```ts
+    import { Jaza } from '@jazadev/node';
+    import express from 'express';
 
-const jaza = new Jaza({
-  secretKey: process.env.JAZA_SECRET_KEY!,
-  publicKey: process.env.JAZA_PUBLIC_KEY!,
-});
+    const jaza = new Jaza({
+      secretKey: process.env.JAZA_SECRET_KEY!,
+      publicKey: process.env.JAZA_PUBLIC_KEY!,
+    });
 
-const app = express();
+    const app = express();
 
-app.post(
-  '/jaza/webhooks',
-  express.raw({ type: 'application/json' }),
-  (req, res) => {
-    const signature = req.header('Jaza-Signature') ?? '';
-    const secret = process.env.JAZA_WEBHOOK_SECRET!; // whsec_… from dashboard
+    app.post(
+      '/jaza/webhooks',
+      express.raw({ type: 'application/json' }),
+      (req, res) => {
+        const signature = req.header('Jaza-Signature') ?? '';
+        const secret = process.env.JAZA_WEBHOOK_SECRET!; // whsec_… from dashboard
 
-    let event;
-    try {
-      event = jaza.webhooks.constructEvent(req.body, signature, secret);
-    } catch {
-      return res.status(400).send('Invalid signature');
-    }
+        let event;
+        try {
+          event = jaza.webhooks.constructEvent(req.body, signature, secret);
+        } catch {
+          return res.status(400).send('Invalid signature');
+        }
 
-    switch (event.type) {
-      case 'jaza.webhook.topUp.completed':
-        // notify user, sync CRM, …
-        break;
-      case 'jaza.webhook.consumption.succeeded':
-        break;
-      default:
-        break;
-    }
+        switch (event.type) {
+          case 'jaza.webhook.topUp.completed':
+            // notify user, sync CRM, …
+            break;
+          case 'jaza.webhook.consumption.succeeded':
+            break;
+          default:
+            break;
+        }
 
-    res.json({ received: true });
-  },
-);
-```
+        res.json({ received: true });
+      },
+    );
+    ```
+  </Tab>
+</Tabs>
 
 `constructEvent` checks the timestamp tolerance (default 5 minutes) and returns a typed `{ id, type, created, data }` object, or throws `JazaError`.
 

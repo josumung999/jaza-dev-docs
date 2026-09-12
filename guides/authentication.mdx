@@ -4,23 +4,54 @@ description: "Secret keys on the server, publishable keys in the app, and client
 sidebarTitle: "Authentication"
 ---
 
-Jaza uses two long-lived keys plus a short-lived **client session** from your host handshake. Top-up JWTs are minted by the React Native SDK from that session — you do not pass them through `onRequestToken` on the happy path.
+Jaza uses two long-lived keys plus a short-lived **client session** from your host handshake. Top-up JWTs are minted by the client SDK from that session — you do not pass them through `onRequestToken` on the happy path.
 
 ## Keys
 
 | Key | Prefix (sandbox / live) | Where |
 | --- | --- | --- |
 | Secret | `jz_test_sk_…` / `jz_live_sk_…` | Server only — `@jazadev/node` |
-| Publishable | `jz_test_pk_…` / `jz_live_pk_…` | Client app — `@jazadev/react-native` or `@jazadev/react` |
+| Publishable | `jz_test_pk_…` / `jz_live_pk_…` | Client app |
 
-```ts
-import { Jaza } from '@jazadev/node';
+### Backend
 
-const jaza = new Jaza({
-  secretKey: process.env.JAZA_SECRET_KEY!,
-  publicKey: process.env.JAZA_PUBLIC_KEY!,
-});
-```
+<Tabs>
+  <Tab title="Node">
+    ```ts
+    import { Jaza } from '@jazadev/node';
+
+    const jaza = new Jaza({
+      secretKey: process.env.JAZA_SECRET_KEY!,
+      publicKey: process.env.JAZA_PUBLIC_KEY!,
+    });
+    ```
+  </Tab>
+</Tabs>
+
+### Frontend
+
+<Tabs>
+  <Tab title="React Native">
+    Pass the publishable key into `JazaProvider`:
+
+    ```tsx
+    <JazaProvider
+      publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
+      getSession={async () => { /* POST /api/jaza/init */ }}
+    />
+    ```
+  </Tab>
+  <Tab title="React">
+    Pass the publishable key into `JazaProvider`:
+
+    ```tsx
+    <JazaProvider
+      publishableKey={process.env.NEXT_PUBLIC_JAZA_PUBLISHABLE_KEY!}
+      getSession={async () => { /* POST /api/jaza/init */ }}
+    />
+    ```
+  </Tab>
+</Tabs>
 
 <Warning>
   Never embed the secret key in a mobile app, web frontend, or public repository.
@@ -28,7 +59,7 @@ const jaza = new Jaza({
 
 ## Client session JWT
 
-`jaza.init({ customerId })` returns an `InitResult` with `sessionToken`. Your Expo app loads it via `JazaProvider` `getSession` (or `authEndpoint`). The React Native SDK then calls Jaza **client** routes with:
+`jaza.init({ customerId })` returns an `InitResult` with `sessionToken`. Your app loads it via `JazaProvider` `getSession` (or `authEndpoint`). The client SDK then calls Jaza **client** routes with:
 
 - `X-Jaza-Public-Key: <publishable key>`
 - `Authorization: Bearer <session JWT>`
@@ -89,8 +120,6 @@ async function ensureLiveCustomer(user: {
   return customer.id;
 }
 ```
-
-The React Native example app demonstrates this remint on sign-in when you switch `JAZA_SECRET_KEY` / publishable keys between sandbox and live.
 
 On the client, handle handshake failure via `onAuthError(error)` and show `authError` from `useJaza()`. Navigate away before clearing session so screens that call `useJaza` are not left outside `JazaProvider`.
 

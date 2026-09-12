@@ -1,13 +1,25 @@
 ---
 title: "Consume credits"
-description: "Debit a wallet with jaza.consume() using featureCode and an idempotency key — always on your backend."
+description: "Debit a wallet with jaza.consume() using featureCode, optional credits override, and an idempotency key — always on your backend."
 sidebarTitle: "Consume credits"
 keywords: ["consume", "featureCode", "idempotency", "metering"]
 ---
 
-Call `jaza.consume()` from your **backend** after a billable action. Pass a dashboard `featureCode` (or raw `credits`) and an **idempotency key** so retries never double-charge.
+Call `jaza.consume()` from your **backend** after a billable action. Pass a dashboard `featureCode`, raw `credits`, or both — plus an **idempotency key** so retries never double-charge.
 
-Never call consume from the React Native app. Pair UI gating with [Gating actions](/guides/gating-actions) (`JazaActionButton`), then enforce here.
+Never call consume from the client app. Pair UI gating with [Gating actions](/guides/gating-actions) (`JazaActionButton`), then enforce here.
+
+```mermaid
+flowchart LR
+  A[Billable work succeeds] --> B["jaza.consume"]
+  B --> C{Inputs}
+  C -->|featureCode only| D[Debit dashboard creditsCost]
+  C -->|credits only| E[Debit raw amount]
+  C -->|both| F[Debit credits + attribute feature]
+  D --> G[Ledger debit]
+  E --> G
+  F --> G
+```
 
 ## Prerequisites
 
@@ -15,7 +27,7 @@ Never call consume from the React Native app. Pair UI gating with [Gating action
 - A customer with a wallet (`cus_…`)
 - `@jazadev/node` with `secretKey` + `publicKey`
 
-## Call consume
+## Fixed cost (feature default)
 
 ```ts
 import { Jaza } from '@jazadev/node';
@@ -32,7 +44,30 @@ const result = await jaza.consume({
 });
 ```
 
-You can pass `credits` instead of `featureCode` when you need an explicit debit amount (do not send both).
+## Variable cost (override)
+
+Pass **both** `featureCode` and `credits` when usage varies (for example AI tokens). Jaza debits the override amount and still stores `featureCode` on the ledger:
+
+```ts
+await jaza.consume({
+  customerId,
+  featureCode: 'AI_CHAT',
+  credits: tokenCost, // overrides dashboard default
+  idempotencyKey: `ai_${jobId}`,
+});
+```
+
+## Raw debit
+
+Pass `credits` alone when you need an explicit amount without feature attribution:
+
+```ts
+await jaza.consume({
+  customerId,
+  credits: 10,
+  idempotencyKey: `adj_${id}`,
+});
+```
 
 ## Charge after success
 
@@ -51,7 +86,7 @@ return response;
 ## With ActionButton
 
 ```tsx
-// Mobile — gate only
+// Client — gate only
 <JazaActionButton
   featureCode="SEND_MESSAGE"
   onPress={async () => {
@@ -71,7 +106,7 @@ await jaza.consume({
 
 ## Errors
 
-The Node SDK throws `JazaError` with `statusCode`, `code`, and `raw`. Handle insufficient balance by prompting a top-up ([Top-up](/guides/top-up)). The mobile SDK may also open the paywall when Jaza signals insufficient credits over the client realtime channel.
+The Node SDK throws `JazaError` with `statusCode`, `code`, and `raw`. Handle insufficient balance by prompting a top-up ([Top-up](/guides/top-up)). The client SDK may also open the paywall when Jaza signals insufficient credits over the client realtime channel.
 
 Successful and failed consumes can emit merchant webhooks (`jaza.webhook.consumption.*`). See [Webhooks](/guides/webhooks) and [Errors](/reference/errors).
 
@@ -85,4 +120,4 @@ const idempotencyKey = `consume-${customerId}-SEND_MESSAGE-${messageId}`;
 
 ## Next steps
 
-- [Gating actions](/guides/gating-actions) · [Node SDK](/sdks/node) · [Ledger](/concepts/ledger) · [Features and bundles](/concepts/features-and-bundles)
+- [Gating actions](/guides/gating-actions) · [Features](/concepts/features) · [Node SDK](/sdks/node) · [Ledger](/concepts/ledger)

@@ -5,7 +5,7 @@ sidebarTitle: "Dashboard setup"
 keywords: ["dashboard", "features", "bundles", "markets", "api keys", "webhooks"]
 ---
 
-Pricing and markets live in the [dashboard](https://jaza.dev/dashboard), not in a separate rate-card API. Configure once, then enforce costs with `jaza.consume({ featureCode })` and sell packs through the React Native top-up sheet.
+Pricing and markets live in the [dashboard](https://jaza.dev/dashboard), not in a separate rate-card API. Configure once, then enforce costs with `jaza.consume({ featureCode })` and sell packs through the client top-up UI.
 
 ## 1. Create an app
 
@@ -30,14 +30,14 @@ Your backend will pass the same `featureCode` to `jaza.consume()`. Costs also ap
 
 ## 4. Define bundles
 
-Under **Bundles**, add credit packs shown in the top-up sheet (label, price, credits granted).
+Under **Bundles**, add credit packs shown in the client top-up UI (label, price, credits granted).
 
 ## 5. Copy API keys
 
 | Key | Env var (typical) | Prefix |
 | --- | --- | --- |
 | Secret | `JAZA_SECRET_KEY` | `jz_test_sk_…` / `jz_live_sk_…` |
-| Publishable | `EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY` / `JAZA_PUBLIC_KEY` | `jz_test_pk_…` / `jz_live_pk_…` |
+| Publishable | Client env (`EXPO_PUBLIC_…` / `NEXT_PUBLIC_…`) + server `JAZA_PUBLIC_KEY` | `jz_test_pk_…` / `jz_live_pk_…` |
 
 <Warning>
   Never ship the secret key in a mobile binary or public repo.

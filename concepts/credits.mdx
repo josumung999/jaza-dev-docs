@@ -14,24 +14,36 @@ Credits are the abstract unit of value inside Jaza. Customers purchase them with
 
 ## How credits map to money
 
-Money enters when a customer tops up. Bundle pricing in the dashboard determines how many credits they receive. Jaza collects local currency via Mobile Money, credits the wallet, and settles to you — you do not run FX or aggregator ops yourself.
+Money enters when a customer tops up. Bundle pricing in the dashboard determines how many credits they receive. Jaza collects local currency via Mobile Money, credits the wallet, and settles USD to you — you do not run FX or aggregator ops yourself.
 
 ## How credits map to features
 
-After a customer has credits, your backend spends them with `jaza.consume()` and a `featureCode` configured under **Features** in the dashboard.
+After a customer has credits, your backend spends them with `jaza.consume()`:
 
-| Feature code | Example cost |
+| Input | Debit amount |
 | --- | --- |
-| `SEND_MESSAGE` | 5 credits |
-| `AI_PROMPT` | 10 credits |
+| `featureCode` only | Dashboard `creditsCost` for that feature |
+| `credits` only | Exact amount you pass |
+| `featureCode` + `credits` | Override: debit `credits`, still attribute `featureCode` on the ledger |
+
+Use the override for **variable metering** — for example AI token usage where cost depends on the request:
+
+```ts
+await jaza.consume({
+  customerId,
+  featureCode: 'AI_CHAT',
+  credits: estimatedTokenCost, // not the dashboard default
+  idempotencyKey: `ai_${jobId}`,
+});
+```
 
 ## Lifecycle
 
-1. **Purchase** — user opens the React Native top-up sheet, picks a bundle, pays with MoMo.
+1. **Purchase** — user opens top-up UI, picks a bundle, pays with MoMo.
 2. **Credit** — Jaza records a ledger credit and increases the wallet.
-3. **Spend** — your backend calls `consume` with `featureCode` + `idempotencyKey`.
+3. **Spend** — your backend calls `consume` with `featureCode` (and optional `credits`) + `idempotencyKey`.
 4. **Audit** — movements stay in the append-only ledger.
 
 ## Next steps
 
-- [Wallets](/concepts/wallets) · [Features and bundles](/concepts/features-and-bundles) · [Top up](/guides/top-up)
+- [Wallets](/concepts/wallets) · [Features](/concepts/features) · [Bundles](/concepts/bundles) · [Top up](/guides/top-up)

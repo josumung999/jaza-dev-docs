@@ -1,10 +1,12 @@
 ---
 title: "Webhooks"
-description: "Outbound signed events for top-ups and consumption — configure endpoints in the dashboard."
+description: "Real-time signed events for top-ups and consumption — so you can improve UX and automate your backend."
 sidebarTitle: "Webhooks"
 ---
 
 Each app can register **multiple HTTPS webhook endpoints** (URL, signing secret, enabled events, status) under **App Settings → Webhooks**.
+
+Use webhooks for **real-time event insights**: unlock access after a successful top-up, sync your own analytics, or notify ops when consumption fails — without polling.
 
 ## What you get
 
@@ -13,13 +15,13 @@ Each app can register **multiple HTTPS webhook endpoints** (URL, signing secret,
 - Dashboard delivery history, retries, and dead-letter visibility
 - Verification via `jaza.webhooks.constructEvent` in `@jazadev/node`
 
-Provider webhooks (for example PawaPay → Jaza) stay **inside** Jaza — you do not implement aggregator callbacks.
+Provider webhooks (collection rails → Jaza) stay **inside** Jaza — you do not implement aggregator callbacks.
 
 ## Prefer the full guide
 
 See **[Merchant webhooks](/guides/webhooks)** for setup, event catalog, signature verification, and Node samples.
 
-For in-app balance after checkout, use the React Native sheet + `onTopUpComplete` / client wallet refresh. Treat merchant webhooks as complementary server automation.
+For in-app balance after checkout, use the client top-up UI + `onTopUpComplete` / wallet refresh. Treat merchant webhooks as complementary server automation.
 
 ## Next steps
 

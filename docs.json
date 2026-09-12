@@ -9,6 +9,12 @@
     "dark": "#0D9488"
   },
   "favicon": "/favicon.svg",
+  "redirects": [
+    {
+      "source": "/concepts/features-and-bundles",
+      "destination": "/concepts/features"
+    }
+  ],
   "navigation": {
     "tabs": [
       {
@@ -28,7 +34,8 @@
               "concepts/credits",
               "concepts/wallets",
               "concepts/ledger",
-              "concepts/features-and-bundles",
+              "concepts/features",
+              "concepts/bundles",
               "concepts/settlements",
               "concepts/webhooks"
             ]

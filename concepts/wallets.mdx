@@ -10,6 +10,8 @@ Every Jaza customer owns a wallet for a given app and environment (sandbox or li
 
 Create customers with `@jazadev/node` (`createCustomer`). You get an id with a `cus_` prefix. Store that id on your user record and pass it to `init`, `consume`, and (if needed) `getBalance`.
 
+Sandbox and live are isolated — a `cus_…` from test keys does not exist under live keys. Remint when you go live; see [Authentication](/guides/authentication#going-live-remint-customerid).
+
 ## How the app learns the balance
 
 1. Host calls `jaza.init({ customerId })` → snapshot includes `wallet.balanceCredits`
@@ -29,14 +31,14 @@ You do **not** need a host `getBalance` route for the primary UI path.
 | Action | Trigger | Balance |
 | --- | --- | --- |
 | Increase | MoMo / card top-up completed | +credits from bundle |
-| Decrease | `jaza.consume()` succeeds | −feature cost (or raw credits) |
+| Decrease | `jaza.consume()` succeeds | −feature cost, raw credits, or override amount |
 
 ## UI in your app
 
-Use the React Native SDK (not invented component names):
+Use the official client SDKs:
 
 - **`JazaBalance`** — shows credits from the session / client wallet (`JazaBalanceWidget` is a deprecated alias)
-- **`JazaTopUpButton`** — opens the MoMo sheet (session-minted top-up JWT)
+- **`JazaTopUpButton`** — opens MoMo checkout (session-minted top-up JWT)
 - **`JazaLedger`** — credit movements
 - **`JazaActionButton`** — gates taps by feature cost (never consumes)
 

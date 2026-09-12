@@ -1,6 +1,6 @@
 ---
 title: "Node.js SDK"
-description: "Official @jazadev/node SDK — create customers, client sessions, consume credits, and verify webhooks."
+description: "Official @jazadev/node SDK — create customers, client sessions, consume credits (with optional override), and verify webhooks."
 keywords: ["@jazadev/node", "node", "sdk", "consume", "init", "webhooks"]
 ---
 
@@ -29,8 +29,9 @@ Constructor is `{ secretKey, publicKey }` — not `{ apiKey }`.
 | Method | Description |
 |--------|-------------|
 | `createCustomer({ name, email?, phoneNumber? })` | Create customer; returns `cus_…` |
-| `init({ customerId })` | Client session JWT + wallet/features snapshot for the mobile SDK |
-| `consume({ customerId, featureCode \| credits, idempotencyKey })` | Debit wallet (server only) |
+| `getCustomer(customerId)` | Fetch customer in the current key environment |
+| `init({ customerId })` | Client session JWT + wallet/features snapshot for the client SDK |
+| `consume({ customerId, featureCode?, credits?, idempotencyKey })` | Debit wallet (server only) |
 | `getBalance({ customerId })` | Wallet including `balanceCredits` |
 | `topUp({ customerId })` | Top-up session + JWT (advanced / legacy BFF) |
 | `check({ topUpId })` | Top-up session status |
@@ -59,7 +60,11 @@ See [Handshake](/guides/handshake).
 
 ## Consume credits
 
-Prefer feature codes configured in the dashboard:
+| Input | Behavior |
+| --- | --- |
+| `featureCode` only | Debit dashboard `creditsCost` |
+| `credits` only | Raw debit |
+| `featureCode` + `credits` | Override amount; still attribute the feature on the ledger |
 
 ```ts
 await jaza.consume({
@@ -69,7 +74,18 @@ await jaza.consume({
 });
 ```
 
-Or debit a raw credit amount (do not send both `featureCode` and `credits`):
+Variable usage (e.g. AI tokens):
+
+```ts
+await jaza.consume({
+  customerId: customer.id,
+  featureCode: 'AI_CHAT',
+  credits: 42,
+  idempotencyKey: `ai_${jobId}`,
+});
+```
+
+Raw amount without feature attribution:
 
 ```ts
 await jaza.consume({
@@ -96,11 +112,11 @@ See [Webhooks](/guides/webhooks). Also exported: `constructEvent`, `WEBHOOK_EVEN
 ```ts
 const wallet = await jaza.getBalance({ customerId: customer.id });
 
-// Advanced: host-minted top-up JWT — prefer client session top-up in the RN SDK
+// Advanced: host-minted top-up JWT — prefer client session top-up in the client SDK
 const session = await jaza.topUp({ customerId: customer.id });
 await jaza.check({ topUpId: session.id });
 ```
 
-## Typical BFF shape
+## Next steps
 
-See the [Quickstart](/quickstart) for `POST /api/jaza/init` and billable `consume` routes wired to Expo.
+- [Quickstart](/quickstart) · [Consume credits](/guides/consume-credits) · [React Native](/sdks/react-native) · [React](/sdks/react)

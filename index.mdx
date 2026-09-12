@@ -1,53 +1,63 @@
 ---
 title: "Introduction"
-description: "Prepaid billing SDKs for African apps. Credit wallets, Mobile Money top-ups, and settlements — without running your own aggregator."
+description: "Prepaid billing for African apps — Mobile Money in 19+ countries, FX, and USD settlements. One integration, unlimited possibilities."
 sidebarTitle: "Introduction"
-keywords: ["jaza", "prepaid", "mobile money", "credits", "expo", "node"]
+keywords: ["jaza", "prepaid", "mobile money", "credits", "sdk"]
 ---
 
-Jaza is **prepaid billing infrastructure** for African apps. You give every user a credit wallet, let them top up with Mobile Money, and meter features against a ledger your backend can trust.
+Jaza gives you everything to manage **Mobile Money in 19+ African countries**, FX at correct rates, and **USD merchant settlements** — so you can ship prepaid wallets and metered features without running your own aggregator.
 
-## What you build vs what Jaza handles
-
-<Columns cols={2}>
-  <Card title="You ship" icon="code">
-    Feature costs and credit bundles in the [dashboard](https://jaza.dev/dashboard). Customers and metering with `@jazadev/node`. Balance and top-up UI with `@jazadev/react-native` (Expo) or `@jazadev/react` (web).
-  </Card>
-  <Card title="Jaza handles" icon="building-columns">
-    Mobile Money across supported African markets, FX into a unified credit model, payment rails (you do **not** set up PawaPay), and merchant **settlements**.
-  </Card>
-</Columns>
-
-<Note>
-  You do **not** need a PawaPay merchant account or multi-currency settlement plumbing. Enable markets in the dashboard; Jaza runs collection and settlement.
-</Note>
+**One integration, unlimited possibilities.**
 
 ## How integration works
 
-1. **Dashboard** — create an app, enable markets, define features and bundles, copy sandbox keys.
-2. **Backend** — `@jazadev/node` with your **secret** key (`createCustomer`, `init`, `getBalance`, `consume`).
-3. **Client** — `@jazadev/react-native` or `@jazadev/react` with your **publishable** key and a client session from `jaza.init`.
+1. **Configure** in the [dashboard](https://jaza.dev/dashboard) — markets, features, bundles, and API keys.
+2. **Server** — `@jazadev/node` with your **secret** key creates customers, mints client sessions (`init`), and meters usage (`consume`).
+3. **App** — `@jazadev/react-native` or `@jazadev/react` with your **publishable** key; your host handshake returns `InitResult` for `JazaProvider`.
 
+```mermaid
+flowchart LR
+  App["Your app<br/>RN or React"] --> BFF["Your BFF<br/>@jazadev/node"]
+  BFF --> API["Jaza API"]
+  API --> MoMo["Mobile Money<br/>19+ countries"]
+  API --> Settle["USD settlements"]
+  App -.->|"publishable key<br/>+ client session"| API
 ```
-App (Expo or React web)  →  your Node BFF  →  @jazadev/node (secret)
-     │                            │
-     └─ publishable key + session ←── jaza.init({ customerId })
-     └─ JazaBalance / JazaTopUpButton (MoMo checkout)
-```
+
+<Note>
+  A polished architecture image can replace or sit beside this diagram later. The flow above is the integration truth.
+</Note>
 
 ## Choose your stack
 
+Pick a backend and a frontend independently. Tab titles stay the same across docs pages so Mintlify can sync picks **within** a page.
+
+### Backend
+
+<Tabs>
+  <Tab title="Node">
+    Official server SDK: **`@jazadev/node`**. Holds the secret key. Owns `createCustomer`, `init`, `consume`, and webhook verification.
+  </Tab>
+</Tabs>
+
+### Frontend
+
+<Tabs>
+  <Tab title="React Native">
+    Official mobile SDK: **`@jazadev/react-native`** (Expo or bare React Native). Publishable key + client session. Widgets: `JazaBalance`, `JazaTopUpButton`, `JazaLedger`, `JazaActionButton`.
+  </Tab>
+  <Tab title="React">
+    Official web SDK: **`@jazadev/react`** (Next.js, Remix, Vite, and more). Same product surface as React Native with a drawer-based top-up UI.
+  </Tab>
+</Tabs>
+
+## Next steps
+
 <CardGroup cols={2}>
-  <Card title="Expo + Node" icon="mobile" href="/quickstart">
-    Official mobile path. End-to-end quickstart with both SDKs.
-  </Card>
-  <Card title="React Web + Node" icon="globe" href="/sdks/react">
-    Official web path (`@jazadev/react`) for Next.js, Remix, Vite, and more.
-  </Card>
-  <Card title="Flutter + Node" icon="mobile">
-    Coming soon. Server metering still works with `@jazadev/node`.
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Keys → customer → init → provider → widgets → consume.
   </Card>
   <Card title="Core concepts" icon="book" href="/concepts/credits">
-    Credits, wallets, ledger, features, and settlements.
+    Credits, wallets, features, bundles, and settlements.
   </Card>
 </CardGroup>

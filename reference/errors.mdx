@@ -1,10 +1,10 @@
 ---
 title: "Errors"
-description: "How JazaError surfaces from the Node SDK, common codes, and safe retry guidance."
+description: "How JazaError surfaces from the Node SDK, common codes, consume validation, and safe retry guidance."
 sidebarTitle: "Errors"
 ---
 
-`@jazadev/node` throws `JazaError` with `statusCode`, `code`, and `raw` when the API rejects a call. Switch on `code` in your BFF; do not parse human messages.
+`@jazadev/node` throws `JazaError` with `statusCode`, `code`, and `raw` when the API rejects a call. Switch on `code` / `statusCode` in your BFF; do not parse human messages as the primary control flow.
 
 ## Typical envelope
 
@@ -17,17 +17,28 @@ sidebarTitle: "Errors"
 }
 ```
 
-## Common codes
+## Common situations
 
-| Situation | What to do |
-| --- | --- |
-| Insufficient credits | Prompt [top-up](/guides/top-up); do not retry the same consume until funded |
-| Unknown customer | Verify `cus_…` id and environment (sandbox vs live) |
-| Unknown feature | Confirm `featureCode` exists under **Features** in the dashboard |
-| Auth / key issues | Check secret key prefix (`jz_test_sk_` vs `jz_live_sk_`) and that the key is server-only |
-| Rate limits / 5xx | Retry with backoff; keep the same idempotency key on consume |
+| Code / situation | When it happens | What to do |
+| --- | --- | --- |
+| Insufficient credits | Wallet balance &lt; debit amount on `consume` | Prompt [top-up](/guides/top-up); do not retry the same consume until funded |
+| Customer not found (404) | Wrong `cus_…`, or sandbox id used with live keys (or vice versa) | Remint under the current environment; see [Authentication](/guides/authentication#going-live-remint-customerid) |
+| Unknown or inactive feature | `featureCode` missing or inactive in the dashboard | Confirm the code under **Features**; activate or create it |
+| `featureCode or credits is required` | Neither `featureCode` nor `credits` sent on `consume` | Pass at least one |
+| Invalid request / validation | Malformed body (e.g. missing `idempotencyKey`, bad `customerId`) | Fix inputs; keep the same idempotency key on retry |
+| Auth / key issues | Bad or missing secret key | Check prefix (`jz_test_sk_` vs `jz_live_sk_`); keep secret server-only |
+| Rate limits / 5xx | Transient platform or network errors | Retry with backoff; **same** idempotency key on consume |
 
 Exact HTTP statuses and codes can vary by endpoint — log `JazaError.raw` when debugging.
+
+## Consume input rules
+
+| Input | Valid? |
+| --- | --- |
+| `featureCode` only | Yes — debit dashboard `creditsCost` |
+| `credits` only | Yes — raw debit |
+| `featureCode` + `credits` | Yes — override amount, attribute feature |
+| Neither | No — `featureCode or credits is required` |
 
 ## Retry guidance
 

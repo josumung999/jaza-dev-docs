@@ -1,20 +1,20 @@
 ---
 title: "Get started with Jaza in minutes"
-description: "Create a customer, mint a client session, wire Expo UI, and meter features with consume — Expo + Node."
+description: "Create a customer, mint a client session, wire your app UI, and meter features with consume — Node backend plus React Native or React."
 sidebarTitle: "Quickstart"
 ---
 
-This guide takes you from zero to a working prepaid flow using **Expo / React Native** and **Node.js**.
+This guide takes you from zero to a working prepaid flow. Choose your **backend** and **frontend** below — the narrative is the same for every stack.
 
 <Tip>
-  Jaza collects Mobile Money and settles to you. You do not create a PawaPay account or manage multi-currency settlement yourself.
+  Jaza collects Mobile Money across supported African markets and settles USD to you. You do not create an aggregator account or manage multi-currency settlement yourself.
 </Tip>
 
 ## Prerequisites
 
 - A [Jaza](https://jaza.dev) developer account
 - Node.js 18+
-- An Expo app (Expo Router or classic `App.tsx`)
+- A React Native (Expo) or React web app
 - Sandbox API keys from the [dashboard](https://jaza.dev/dashboard)
 
 ## 1. Create an app and copy keys
@@ -28,30 +28,43 @@ In the dashboard:
 | Key | Where it lives | Example prefix |
 | --- | --- | --- |
 | Secret | Server only (`JAZA_SECRET_KEY`) | `jz_test_sk_…` |
-| Publishable | Mobile app (`EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY`) | `jz_test_pk_…` |
+| Publishable | Client app | `jz_test_pk_…` |
+
+<Tabs>
+  <Tab title="React Native">
+    Use `EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY` (or your bundler's public env) for the publishable key.
+  </Tab>
+  <Tab title="React">
+    Use `NEXT_PUBLIC_JAZA_PUBLISHABLE_KEY` (or `VITE_…` / equivalent) for the publishable key.
+  </Tab>
+</Tabs>
 
 <Warning>
-  Never ship the secret key in a mobile binary or public repo.
+  Never ship the secret key in a mobile binary, web bundle, or public repo.
 </Warning>
 
 When you switch from sandbox to live keys, create a **new** `customerId` under live and overwrite it in your user database — test wallets do not carry over. See [Authentication → Going live](/guides/authentication#going-live-remint-customerid).
 
-## 2. Install the Node SDK
+## 2. Install the backend SDK
 
-```bash
-npm install @jazadev/node
-```
+<Tabs>
+  <Tab title="Node">
+    ```bash
+    npm install @jazadev/node
+    ```
 
-Create a shared server client:
+    Create a shared server client:
 
-```ts
-import { Jaza } from '@jazadev/node';
+    ```ts
+    import { Jaza } from '@jazadev/node';
 
-export const jaza = new Jaza({
-  secretKey: process.env.JAZA_SECRET_KEY!, // jz_test_sk_…
-  publicKey: process.env.JAZA_PUBLIC_KEY!, // jz_test_pk_…
-});
-```
+    export const jaza = new Jaza({
+      secretKey: process.env.JAZA_SECRET_KEY!, // jz_test_sk_…
+      publicKey: process.env.JAZA_PUBLIC_KEY!, // jz_test_pk_…
+    });
+    ```
+  </Tab>
+</Tabs>
 
 ## 3. Create a customer
 
@@ -68,7 +81,7 @@ const customer = await jaza.createCustomer({
 
 ## 4. Expose a host init route
 
-The mobile SDK needs a **client session** from your backend. Map the signed-in user → Jaza `customerId` → `jaza.init`.
+Your app needs a **client session** from your backend. Map the signed-in user → Jaza `customerId` → `jaza.init`.
 
 ```ts
 // POST /api/jaza/init  (require your app session)
@@ -84,36 +97,47 @@ The app never calls Jaza with the secret key. It calls **your** BFF; you call th
 
 See [Handshake](/guides/handshake) for `getSession` vs `authEndpoint` and 401 re-auth.
 
-## 5. Install the React Native SDK
+## 5. Install the frontend SDK
 
-```bash
-npm install @jazadev/react-native
-```
+<Tabs>
+  <Tab title="React Native">
+    ```bash
+    npm install @jazadev/react-native
+    ```
 
-Peer dependencies (Expo):
+    Peer dependencies (Expo):
 
-```bash
-npx expo install react react-native react-native-reanimated react-native-gesture-handler react-native-safe-area-context react-native-screens @gorhom/bottom-sheet @expo/vector-icons @shopify/flash-list
-```
+    ```bash
+    npx expo install react react-native react-native-reanimated react-native-gesture-handler react-native-safe-area-context react-native-screens @gorhom/bottom-sheet @expo/vector-icons @shopify/flash-list
+    ```
 
-Ensure Android resizes with the keyboard (`app.json`):
+    Ensure Android resizes with the keyboard (`app.json`):
 
-```json
-{
-  "expo": {
-    "android": {
-      "softwareKeyboardLayoutMode": "resize"
+    ```json
+    {
+      "expo": {
+        "android": {
+          "softwareKeyboardLayoutMode": "resize"
+        }
+      }
     }
-  }
-}
-```
+    ```
+  </Tab>
+  <Tab title="React">
+    ```bash
+    npm install @jazadev/react
+    ```
+
+    Peer dependencies: `react`, `react-dom`, and `@base-ui/react` (for the top-up drawer).
+  </Tab>
+</Tabs>
 
 ## 6. Wrap the app with `JazaProvider`
 
-Pass `getSession` (preferred) so the SDK loads the client session from your init route. The SDK then talks to Jaza client APIs with the **session token** + **publishable key**. Top-up JWTs are minted internally — no host `onRequestToken`.
+Pass `getSession` so the SDK loads the client session from your init route. Top-up JWTs are minted internally — no host `onRequestToken`.
 
 <Tabs>
-  <Tab title="Expo Router">
+  <Tab title="React Native">
     ```tsx
     // app/_layout.tsx
     import { Stack } from 'expo-router';
@@ -151,31 +175,36 @@ Pass `getSession` (preferred) so the SDK loads the client session from your init
     }
     ```
   </Tab>
-  <Tab title="Classic App">
+  <Tab title="React">
     ```tsx
-    // App.tsx
-    import { GestureHandlerRootView } from 'react-native-gesture-handler';
-    import { JazaProvider, type InitResult } from '@jazadev/react-native';
-    import { HomeScreen } from './screens/HomeScreen';
+    // app/providers.tsx (Next.js App Router) or root layout
+    'use client';
 
-    export default function App() {
+    import { JazaProvider, type InitResult } from '@jazadev/react';
+
+    export function Providers({ children }: { children: React.ReactNode }) {
       return (
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <JazaProvider
-            publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
-            getSession={async () => {
-              const res = await fetch(
-                `${process.env.EXPO_PUBLIC_API_URL}/api/jaza/init`,
-                { method: 'POST', credentials: 'include' },
-              );
-              if (!res.ok) throw new Error('Jaza init failed');
-              return (await res.json()) as InitResult;
-            }}
-            theme="system"
-          >
-            <HomeScreen />
-          </JazaProvider>
-        </GestureHandlerRootView>
+        <JazaProvider
+          publishableKey={process.env.NEXT_PUBLIC_JAZA_PUBLISHABLE_KEY!}
+          getSession={async () => {
+            const res = await fetch('/api/jaza/init', {
+              method: 'POST',
+              credentials: 'include',
+            });
+            if (!res.ok) throw new Error('Jaza init failed');
+            return (await res.json()) as InitResult;
+          }}
+          onAuthError={() => {
+            console.warn('Jaza session expired');
+          }}
+          onTopUpComplete={({ credits }) => {
+            console.log('Top-up completed', credits);
+          }}
+          theme="system"
+          locale="en"
+        >
+          {children}
+        </JazaProvider>
       );
     }
     ```
@@ -184,42 +213,80 @@ Pass `getSession` (preferred) so the SDK loads the client session from your init
 
 ## 7. Balance, top-up, ledger, and gated actions
 
-```tsx
-import { View } from 'react-native';
-import {
-  JazaBalance,
-  JazaTopUpButton,
-  JazaLedger,
-  JazaActionButton,
-} from '@jazadev/react-native';
+<Tabs>
+  <Tab title="React Native">
+    ```tsx
+    import { View } from 'react-native';
+    import {
+      JazaBalance,
+      JazaTopUpButton,
+      JazaLedger,
+      JazaActionButton,
+    } from '@jazadev/react-native';
 
-const API_BASE = process.env.EXPO_PUBLIC_API_URL!;
+    const API_BASE = process.env.EXPO_PUBLIC_API_URL!;
 
-export default function HomeScreen() {
-  return (
-    <View style={{ padding: 20, gap: 16 }}>
-      <JazaBalance />
-      <JazaTopUpButton label="Top up credits" />
-      <JazaLedger mode="preview" limit={5} />
-      <JazaActionButton
-        featureCode="SEND_MESSAGE"
-        label="Send message"
-        onPress={async () => {
-          await fetch(`${API_BASE}/api/jaza/actions`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ featureCode: 'SEND_MESSAGE' }),
-          });
-        }}
-      />
-    </View>
-  );
-}
-```
+    export default function HomeScreen() {
+      return (
+        <View style={{ padding: 20, gap: 16 }}>
+          <JazaBalance />
+          <JazaTopUpButton label="Top up credits" />
+          <JazaLedger mode="preview" limit={5} />
+          <JazaActionButton
+            featureCode="SEND_MESSAGE"
+            label="Send message"
+            onPress={async () => {
+              await fetch(`${API_BASE}/api/jaza/actions`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ featureCode: 'SEND_MESSAGE' }),
+              });
+            }}
+          />
+        </View>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="React">
+    ```tsx
+    'use client';
 
-- **`JazaBalance`** — credits from the session snapshot / client wallet refresh (`JazaBalanceWidget` is a deprecated alias)
-- **`JazaTopUpButton`** — opens the MoMo sheet; SDK mints the top-up JWT from the session
+    import {
+      JazaBalance,
+      JazaTopUpButton,
+      JazaLedger,
+      JazaActionButton,
+    } from '@jazadev/react';
+
+    export default function HomePage() {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <JazaBalance />
+          <JazaTopUpButton label="Top up credits" />
+          <JazaLedger mode="preview" limit={5} />
+          <JazaActionButton
+            featureCode="SEND_MESSAGE"
+            label="Send message"
+            onPress={async () => {
+              await fetch('/api/jaza/actions', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ featureCode: 'SEND_MESSAGE' }),
+              });
+            }}
+          />
+        </div>
+      );
+    }
+    ```
+  </Tab>
+</Tabs>
+
+- **`JazaBalance`** — credits from the session snapshot / client wallet refresh
+- **`JazaTopUpButton`** — opens MoMo checkout; SDK mints the top-up JWT from the session
 - **`JazaLedger`** — recent movements (`preview` or `scroll`)
 - **`JazaActionButton`** — **gate only**; opens top-up when balance is too low; never debits
 
@@ -236,7 +303,7 @@ await jaza.consume({
 });
 ```
 
-Use a stable `idempotencyKey` so retries do not double-charge. See [Consume credits](/guides/consume-credits) and [Gating actions](/guides/gating-actions).
+For variable usage (e.g. AI tokens), pass both `featureCode` and `credits` to override the dashboard default while still attributing the feature. See [Consume credits](/guides/consume-credits).
 
 ## Optional: merchant webhooks
 
@@ -248,4 +315,4 @@ Register HTTPS endpoints under **App Settings → Webhooks**, then verify payloa
 - Credit wallet UI + MoMo top-ups without running an aggregator
 - Feature gating in the UI and metering on your backend
 
-Next: [Handshake](/guides/handshake) · [Authentication](/guides/authentication) · [Top-up](/guides/top-up) · [Node SDK](/sdks/node) · [React Native SDK](/sdks/react-native)
+Next: [Handshake](/guides/handshake) · [Authentication](/guides/authentication) · [Top-up](/guides/top-up) · [Node SDK](/sdks/node)

@@ -1,14 +1,18 @@
 ---
-title: "React Native / Expo SDK"
-description: "Official @jazadev/react-native SDK — JazaProvider, balance, top-up, ledger, and ActionButton gating."
+title: "React Native SDK"
+description: "Official @jazadev/react-native SDK — JazaProvider, balance, top-up sheet, ledger, and ActionButton gating."
 keywords: ["@jazadev/react-native", "expo", "jaza", "top-up", "balance", "init"]
 ---
 
-Official React Native / Expo client for Jaza.
+Official React Native client for Jaza (Expo or bare RN).
 
 Use this in your **mobile app** with your publishable key (`jz_*_pk_*`) and a **client session** from your backend (`jaza.init` → `getSession` / `authEndpoint`). Never put your secret key in the app.
 
 Server-side: [`@jazadev/node`](/sdks/node) — `init` for the handshake, `consume` for debits. The SDK mints short-lived top-up JWTs internally; apps do not implement `onRequestToken` on the happy path.
+
+<Note>
+  Source and examples live on GitHub: [packages/@jaza-react-native](https://github.com/josumung999/jaza-packages/tree/main/packages/@jaza-react-native). The Expo sample under `example/` mirrors the full sign-in → init → top-up → consume path.
+</Note>
 
 ## Install
 
@@ -40,71 +44,39 @@ Keep the phone field visible when the keyboard opens on Android:
 
 Wrap the app outermost with `GestureHandlerRootView`, then `JazaProvider`. Prefer `getSession` (or `authEndpoint`).
 
-<Tabs>
-  <Tab title="Expo Router">
-    ```tsx
-    import { Stack } from 'expo-router';
-    import { GestureHandlerRootView } from 'react-native-gesture-handler';
-    import { JazaProvider, type InitResult } from '@jazadev/react-native';
+```tsx
+import { Stack } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { JazaProvider, type InitResult } from '@jazadev/react-native';
 
-    const API_BASE = process.env.EXPO_PUBLIC_API_URL!;
+const API_BASE = process.env.EXPO_PUBLIC_API_URL!;
 
-    export default function RootLayout() {
-      return (
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <JazaProvider
-            publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
-            getSession={async () => {
-              const res = await fetch(`${API_BASE}/api/jaza/init`, {
-                method: 'POST',
-                credentials: 'include',
-              });
-              if (!res.ok) throw new Error('Jaza init failed');
-              return (await res.json()) as InitResult;
-            }}
-            onAuthError={() => console.warn('Jaza session expired')}
-            onTopUpComplete={({ credits }) => {
-              console.log('Top-up completed', credits);
-            }}
-            theme="system"
-            locale="en"
-          >
-            <Stack />
-          </JazaProvider>
-        </GestureHandlerRootView>
-      );
-    }
-    ```
-  </Tab>
-  <Tab title="Classic App">
-    ```tsx
-    import { GestureHandlerRootView } from 'react-native-gesture-handler';
-    import { JazaProvider, type InitResult } from '@jazadev/react-native';
-    import { HomeScreen } from './screens/HomeScreen';
-
-    export default function App() {
-      return (
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <JazaProvider
-            publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
-            getSession={async () => {
-              const res = await fetch(
-                `${process.env.EXPO_PUBLIC_API_URL}/api/jaza/init`,
-                { method: 'POST', credentials: 'include' },
-              );
-              if (!res.ok) throw new Error('Jaza init failed');
-              return (await res.json()) as InitResult;
-            }}
-            theme="system"
-          >
-            <HomeScreen />
-          </JazaProvider>
-        </GestureHandlerRootView>
-      );
-    }
-    ```
-  </Tab>
-</Tabs>
+export default function RootLayout() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <JazaProvider
+        publishableKey={process.env.EXPO_PUBLIC_JAZA_PUBLISHABLE_KEY!}
+        getSession={async () => {
+          const res = await fetch(`${API_BASE}/api/jaza/init`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+          if (!res.ok) throw new Error('Jaza init failed');
+          return (await res.json()) as InitResult;
+        }}
+        onAuthError={() => console.warn('Jaza session expired')}
+        onTopUpComplete={({ credits }) => {
+          console.log('Top-up completed', credits);
+        }}
+        theme="system"
+        locale="en"
+      >
+        <Stack />
+      </JazaProvider>
+    </GestureHandlerRootView>
+  );
+}
+```
 
 ### Provider props (high level)
 
@@ -121,41 +93,82 @@ Wrap the app outermost with `GestureHandlerRootView`, then `JazaProvider`. Prefe
 
 See [Handshake](/guides/handshake).
 
-## Balance — `JazaBalance`
+## Widgets and customization
+
+Default UI works out of the box. Pass a **children render prop** to wrap your own components while reusing SDK state.
+
+### `JazaBalance`
 
 ```tsx
 import { JazaBalance } from '@jazadev/react-native';
 
+{/* Default */}
 <JazaBalance />
+
+{/* Custom */}
+<JazaBalance>
+  {({ balanceCredits, loading, error, refresh }) => (
+    <Pressable onPress={() => refresh()}>
+      <Text>{loading ? '…' : `${balanceCredits ?? 0} credits`}</Text>
+      {error ? <Text>{error}</Text> : null}
+    </Pressable>
+  )}
+</JazaBalance>
 ```
 
 `JazaBalanceWidget` remains as a deprecated alias.
 
-## Top up — `JazaTopUpButton`
+### `JazaTopUpButton`
 
-Opens the sheet using a session-minted top-up JWT (no `onRequestToken`).
+Opens the **bottom sheet** using a session-minted top-up JWT (no `onRequestToken`).
 
 ```tsx
-import { JazaBalance, JazaTopUpButton } from '@jazadev/react-native';
-
-<JazaBalance />
+{/* Default */}
 <JazaTopUpButton label="Top up credits" />
+
+{/* Custom */}
+<JazaTopUpButton label="Top up">
+  {({ onPress, loading, disabled, label, error }) => (
+    <Pressable onPress={onPress} disabled={disabled || loading}>
+      <Text>{loading ? 'Opening…' : label}</Text>
+      {error ? <Text>{error}</Text> : null}
+    </Pressable>
+  )}
+</JazaTopUpButton>
 ```
 
-## Ledger — `JazaLedger`
+### `JazaLedger`
 
 ```tsx
+{/* Default */}
 <JazaLedger mode="preview" limit={5} />
 <JazaLedger mode="scroll" />
+
+{/* Custom row */}
+<JazaLedger
+  mode="preview"
+  limit={5}
+  ItemComponent={({ title, subtitle, credits, direction }) => (
+    <View>
+      <Text>{title}</Text>
+      <Text>{subtitle}</Text>
+      <Text>
+        {direction === 'CREDIT' ? '+' : '−'}
+        {credits}
+      </Text>
+    </View>
+  )}
+/>
 ```
 
 `mode="scroll"` needs peer `@shopify/flash-list`.
 
-## Gate — `JazaActionButton`
+### `JazaActionButton`
 
 Gate only — never consume. See [Gating actions](/guides/gating-actions).
 
 ```tsx
+{/* Default */}
 <JazaActionButton
   featureCode="SEND_MESSAGE"
   label="Send message"
@@ -163,6 +176,17 @@ Gate only — never consume. See [Gating actions](/guides/gating-actions).
     await fetch(`${API}/api/messages`, { method: 'POST', credentials: 'include' });
   }}
 />
+
+{/* Custom */}
+<JazaActionButton featureCode="SEND_MESSAGE" onPress={doSend}>
+  {({ onPress, canAfford, cost, loading, disabled, label }) => (
+    <Pressable onPress={onPress} disabled={disabled || loading}>
+      <Text>
+        {label} ({cost ?? '…'} cr){canAfford ? '' : ' — top up'}
+      </Text>
+    </Pressable>
+  )}
+</JazaActionButton>
 ```
 
 ## What happens after Top up
@@ -190,4 +214,4 @@ You do not configure MoMo aggregators; Jaza handles collection and settlements.
 
 ## Full path
 
-Follow the [Quickstart](/quickstart) for Node BFF + Expo end-to-end.
+Follow the [Quickstart](/quickstart) for Node BFF + React Native end-to-end.

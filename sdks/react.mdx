@@ -10,6 +10,10 @@ Use this in your **browser app** with your publishable key (`jz_*_pk_*`) and a *
 
 Server-side: [`@jazadev/node`](/sdks/node) — `init` for the handshake, `consume` for debits. The SDK mints short-lived top-up JWTs from the client session.
 
+<Note>
+  Source and examples live on GitHub: [packages/@jaza-react](https://github.com/josumung999/jaza-packages/tree/main/packages/@jaza-react). The Next.js sample under `example/` mirrors the full sign-in → init → top-up → consume path.
+</Note>
+
 ## Install
 
 ```bash
@@ -56,7 +60,10 @@ export function BillingProvider({ children }: { children: React.ReactNode }) {
     <JazaProvider
       publishableKey={process.env.NEXT_PUBLIC_JAZA_PUBLISHABLE_KEY!}
       getSession={async () => {
-        const res = await fetch('/api/jaza/init', { method: 'POST' });
+        const res = await fetch('/api/jaza/init', {
+          method: 'POST',
+          credentials: 'include',
+        });
         if (!res.ok) throw new Error('Jaza init failed');
         return (await res.json()) as InitResult;
       }}
@@ -79,43 +86,102 @@ const result = await jaza.init({ customerId: user.jazaCustomerId });
 return Response.json(result);
 ```
 
-## Widgets
-
-```tsx
-import {
-  JazaBalance,
-  JazaTopUpButton,
-  JazaLedger,
-  JazaActionButton,
-} from '@jazadev/react';
-
-<>
-  <JazaBalance />
-  <JazaTopUpButton />
-  <JazaLedger mode="preview" limit={5} />
-  <JazaActionButton
-    featureCode="SEND_MESSAGE"
-    onPress={async () => {
-      await fetch('/api/consume', { method: 'POST' });
-    }}
-  />
-</>
-```
-
-`JazaActionButton` only **gates** — your BFF must call `jaza.consume` with the secret key.
-
 ## Top-up drawer
 
-Checkout uses a **Base UI Drawer** (not a mobile-only bottom sheet):
+Checkout uses a **Base UI Drawer**:
 
 - **≤767px** — slides up from the bottom
 - **Desktop** — slides in from the right
 
 Same offer → payment → processing flow as the React Native SDK.
 
-## Render props
+## Widgets and customization
 
-Every widget accepts optional `children` render props for custom UI while reusing SDK state.
+Default UI works out of the box. Pass a **children render prop** (or `ItemComponent` on the ledger) to wrap your own components while reusing SDK state.
+
+### `JazaBalance`
+
+```tsx
+import { JazaBalance } from '@jazadev/react';
+
+{/* Default */}
+<JazaBalance />
+
+{/* Custom */}
+<JazaBalance>
+  {({ balanceCredits, loading, error, refresh }) => (
+    <button type="button" onClick={() => void refresh()}>
+      {loading ? '…' : `${balanceCredits ?? 0} credits`}
+      {error ? <span>{error}</span> : null}
+    </button>
+  )}
+</JazaBalance>
+```
+
+### `JazaTopUpButton`
+
+```tsx
+{/* Default */}
+<JazaTopUpButton label="Top up credits" />
+
+{/* Custom */}
+<JazaTopUpButton label="Top up">
+  {({ onPress, loading, disabled, label, error }) => (
+    <button type="button" onClick={onPress} disabled={disabled || loading}>
+      {loading ? 'Opening…' : label}
+      {error ? <span>{error}</span> : null}
+    </button>
+  )}
+</JazaTopUpButton>
+```
+
+### `JazaLedger`
+
+```tsx
+{/* Default */}
+<JazaLedger mode="preview" limit={5} />
+
+{/* Custom row */}
+<JazaLedger
+  mode="preview"
+  limit={5}
+  ItemComponent={({ title, subtitle, credits, direction }) => (
+    <div>
+      <strong>{title}</strong>
+      <span>{subtitle}</span>
+      <span>
+        {direction === 'CREDIT' ? '+' : '−'}
+        {credits}
+      </span>
+    </div>
+  )}
+/>
+```
+
+### `JazaActionButton`
+
+Gate only — your BFF must call `jaza.consume`. See [Gating actions](/guides/gating-actions).
+
+```tsx
+{/* Default */}
+<JazaActionButton
+  featureCode="SEND_MESSAGE"
+  label="Send message"
+  onPress={async () => {
+    await fetch('/api/messages', { method: 'POST', credentials: 'include' });
+  }}
+/>
+
+{/* Custom */}
+<JazaActionButton featureCode="SEND_MESSAGE" onPress={doSend}>
+  {({ onPress, canAfford, cost, loading, disabled, label }) => (
+    <button type="button" onClick={onPress} disabled={disabled || loading}>
+      {label} ({cost ?? '…'} cr)
+      {!canAfford ? ' — top up' : ''}
+    </button>
+  )}
+</JazaActionButton>
+```
 
 ## Sandbox → live
 
@@ -124,5 +190,3 @@ TEST and LIVE customer ids are isolated. Remint with `createCustomer` under live
 ## Next steps
 
 - [Handshake](/guides/handshake) · [Top-up](/guides/top-up) · [Gating actions](/guides/gating-actions) · [Node SDK](/sdks/node) · [React Native SDK](/sdks/react-native)
-
-The monorepo ships a **Next.js** sample under `packages/@jaza-react/example` with the same sign-in → init → top-up → consume flow as the Expo example (local API routes, no external BFF).

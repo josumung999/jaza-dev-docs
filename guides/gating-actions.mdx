@@ -10,60 +10,86 @@ sidebarTitle: "Gating actions"
   Attackers can bypass UI. Treat ActionButton as a convenience, not authorization. Always meter on the server.
 </Warning>
 
-## Dual-SDK pattern
+## Responsibilities
 
 | Layer | Responsibility |
 | --- | --- |
-| Expo | `JazaActionButton` compares balance to the feature cost from the session / features snapshot |
-| Insufficient | Opens the top-up (paywall) sheet; does **not** run `onPress` |
+| Client | `JazaActionButton` compares balance to the feature cost from the session / features snapshot |
+| Insufficient | Opens top-up (paywall); does **not** run `onPress` |
 | Sufficient | Runs your `onPress` → call **your** BFF |
-| Node BFF | `jaza.consume({ customerId, featureCode, idempotencyKey })` with the secret key |
+| Backend | `jaza.consume({ customerId, featureCode, idempotencyKey })` with the secret key |
 
-## Mobile
+## Client
 
-```tsx
-import { JazaActionButton } from '@jazadev/react-native';
-// or: import { JazaActionButton } from '@jazadev/react';
+<Tabs>
+  <Tab title="React Native">
+    ```tsx
+    import { JazaActionButton } from '@jazadev/react-native';
 
-const API_BASE = process.env.EXPO_PUBLIC_API_URL!;
+    const API_BASE = process.env.EXPO_PUBLIC_API_URL!;
 
-<JazaActionButton
-  featureCode="SEND_MESSAGE"
-  label="Send message"
-  onPress={async () => {
-    const res = await fetch(`${API_BASE}/api/messages`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: 'Hello' }),
-    });
-    if (!res.ok) throw new Error('Send failed');
-  }}
-/>
-```
+    <JazaActionButton
+      featureCode="SEND_MESSAGE"
+      label="Send message"
+      onPress={async () => {
+        const res = await fetch(`${API_BASE}/api/messages`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: 'Hello' }),
+        });
+        if (!res.ok) throw new Error('Send failed');
+      }}
+    />
+    ```
+  </Tab>
+  <Tab title="React">
+    ```tsx
+    import { JazaActionButton } from '@jazadev/react';
+
+    <JazaActionButton
+      featureCode="SEND_MESSAGE"
+      label="Send message"
+      onPress={async () => {
+        const res = await fetch('/api/messages', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: 'Hello' }),
+        });
+        if (!res.ok) throw new Error('Send failed');
+      }}
+    />
+    ```
+  </Tab>
+</Tabs>
 
 Configure `SEND_MESSAGE` (code + credit cost) in the [dashboard](https://jaza.dev/dashboard) under **Features**. Costs are included in the `jaza.init` snapshot and refreshed on the client.
 
-Optional children render props let you keep your own button styling while reusing the gate.
+Optional children render props let you keep your own button styling while reusing the gate — see the [React Native](/sdks/react-native) and [React](/sdks/react) SDK pages.
 
 ## Host consume
 
-```ts
-// Inside POST /api/messages (after your auth + business logic)
-await jaza.consume({
-  customerId: req.user.jazaCustomerId,
-  featureCode: 'SEND_MESSAGE',
-  idempotencyKey: `msg_${messageId}`,
-});
-```
+<Tabs>
+  <Tab title="Node">
+    ```ts
+    // Inside POST /api/messages (after your auth + business logic)
+    await jaza.consume({
+      customerId: req.user.jazaCustomerId,
+      featureCode: 'SEND_MESSAGE',
+      idempotencyKey: `msg_${messageId}`,
+    });
+    ```
+  </Tab>
+</Tabs>
 
 Handle insufficient credits on the server even if the UI already gated — the balance can change between tap and request. See [Consume credits](/guides/consume-credits).
 
-When consume fails for insufficient credits, Jaza can also notify the mobile session over the client realtime channel so the SDK can open the paywall. You still return an error from your BFF.
+When consume fails for insufficient credits, Jaza can also notify the client session over the realtime channel so the SDK can open the paywall. You still return an error from your BFF.
 
 ## What not to do
 
-- Do **not** call `jaza.consume` from the React Native app
+- Do **not** call `jaza.consume` from the client app
 - Do **not** invent client-side “debit” endpoints that only trust the device
 - Do **not** use `Fuel*` or other unofficial component names — use `JazaActionButton`
 
@@ -72,4 +98,5 @@ When consume fails for insufficient credits, Jaza can also notify the mobile ses
 - [Handshake](/guides/handshake)
 - [Consume credits](/guides/consume-credits)
 - [Top-up](/guides/top-up)
+- [Features](/concepts/features)
 - [React Native SDK](/sdks/react-native) · [React web SDK](/sdks/react)

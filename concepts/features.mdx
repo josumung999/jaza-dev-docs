@@ -1,0 +1,31 @@
+---
+title: "Features"
+description: "Dashboard features define what each action costs. Gate in the client, meter with consume on the server."
+sidebarTitle: "Features"
+---
+
+A **feature** is a named billable action with a default `creditsCost` (for example `SEND_MESSAGE` → 5 credits). You configure features under **Features** in the [dashboard](https://jaza.dev/dashboard) — not via a separate rate-card API.
+
+## Shared responsibilities
+
+| Layer | Responsibility |
+| --- | --- |
+| Dashboard | Define `featureCode`, description, and default `creditsCost` |
+| Client (`JazaActionButton`) | **Gate only** — check balance vs cost; open top-up when short; never debit |
+| Server (`jaza.consume`) | **Meter** — debit the wallet with the secret key after the billable work |
+
+Both sides must use the **same** `featureCode` string.
+
+## Fixed vs variable cost
+
+| Pattern | How you call consume |
+| --- | --- |
+| Fixed cost | `consume({ featureCode, idempotencyKey })` — uses dashboard `creditsCost` |
+| Variable cost | `consume({ featureCode, credits, idempotencyKey })` — overrides amount, still attributes the feature |
+| Raw debit | `consume({ credits, idempotencyKey })` — no feature attribution |
+
+Variable metering is useful for AI tokens, message length, or other usage that cannot be a single fixed cost.
+
+## Next steps
+
+- [Bundles](/concepts/bundles) · [Gating actions](/guides/gating-actions) · [Consume credits](/guides/consume-credits) · [Dashboard setup](/guides/dashboard-setup)
