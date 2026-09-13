@@ -28,7 +28,7 @@
       "sameAs": [
         "https://x.com/jazadev",
         "https://linkedin.com/company/jaza",
-        "https://github.com/josumung999/jaza-packages"
+        "https://github.com/Polele-Inc/jaza"
       ]
     }
   },
@@ -132,7 +132,7 @@
   "footer": {
     "socials": {
       "x": "https://x.com/jazadev",
-      "github": "https://github.com/josumung999/jaza-packages",
+      "github": "https://github.com/Polele-Inc/jaza",
       "linkedin": "https://linkedin.com/company/jaza"
     }
   }
