@@ -69,6 +69,7 @@
               "guides/dashboard-setup",
               "guides/handshake",
               "guides/top-up",
+              "guides/iap-revenuecat",
               "guides/gating-actions",
               "guides/consume-credits",
               "guides/webhooks"
